@@ -21,7 +21,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
         loadConfig();
     }
 
-    private Set<Game> activeGames = new HashSet<>();
+    private final Set<Game> activeGames = new HashSet<>();
 
     @Override
     public void onUpdateReceived(Update update){
