@@ -7,15 +7,22 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.SQLException;
 import java.util.*;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 
 public class RaccoonBot extends TelegramLongPollingBot{
 
     private String botUsername;
     private String botToken;
+    private String developer;
+
+    private final ExecutorService executorService = Executors.newFixedThreadPool(2);
 
     public RaccoonBot(){
         loadConfig();
@@ -29,6 +36,26 @@ public class RaccoonBot extends TelegramLongPollingBot{
             Message message = update.getMessage();
             String text = message.getText();
             String chatID = String.valueOf(message.getChatId());
+            String userID = String.valueOf(message.getFrom().getId());
+
+            executorService.submit(() -> {
+                try {
+                    if(!DatabaseControl.userExist(userID)){
+                        String username = message.getFrom().getUserName();
+                        String name = message.getFrom().getFirstName();
+                        String lastname = message.getFrom().getLastName();
+                        int words = 0;
+                        int insert_id = DatabaseControl.getUserCount() + 1;
+
+                        if(DatabaseControl.insertUser(insert_id, username, name, lastname, words, userID)){
+                            System.out.println("[RaccoonBot] User with ID: " + userID + " inserted successfully");
+                        };
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    sendMsg(chatID, "[DATABASE ERROR] Зверніться до розробника: " + "@" + this.developer);
+                }
+            });
 
             if (text.equals("/start_raccoon_game")) {
                 if (findGameByChatID(chatID) != null) {
@@ -108,13 +135,11 @@ public class RaccoonBot extends TelegramLongPollingBot{
         return this.botToken;
     }
 
-    private Game findGameByChatID(String chatID){
-        for(Game game : activeGames){
-            if(game.getChatId().equals(chatID)){
-                return game;
-            }
-        }
-        return null;
+    private Game findGameByChatID(String chatID) {
+        return activeGames.stream()
+                .filter(game -> game.getChatId().equals(chatID))
+                .findFirst()
+                .orElse(null);
     }
 
     private void loadConfig(){
@@ -123,6 +148,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
             properties.load(inputStream);
             this.botToken = properties.getProperty("bot.token");
             this.botUsername = properties.getProperty("bot.username");
+            this.developer = properties.getProperty("developer.username");
         } catch (IOException e) {
             e.printStackTrace();
         }
