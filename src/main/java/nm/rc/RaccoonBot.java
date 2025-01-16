@@ -31,60 +31,113 @@ public class RaccoonBot extends TelegramLongPollingBot{
     private final Set<Game> activeGames = new HashSet<>();
 
     @Override
-    public void onUpdateReceived(Update update){
-        if(update.hasMessage()){
+    public void onUpdateReceived(Update update) {
+        if (update.hasMessage()) {
             Message message = update.getMessage();
             String text = message.getText();
             String chatID = String.valueOf(message.getChatId());
             String userID = String.valueOf(message.getFrom().getId());
 
-            executorService.submit(() -> {
-                try {
-                    if(!DatabaseControl.userExist(userID)){
-                        String username = message.getFrom().getUserName();
-                        String name = message.getFrom().getFirstName();
-                        String lastname = message.getFrom().getLastName();
-                        int words = 0;
-                        int insert_id = DatabaseControl.getUserCount() + 1;
+            executorService.submit(() -> handleUserAndGameLogic(userID, chatID, message, text));
+        }
+    }
 
-                        if(DatabaseControl.insertUser(insert_id, username, name, lastname, words, userID)){
-                            System.out.println("[RaccoonBot] User with ID: " + userID + " inserted successfully");
-                        };
-                    }
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    sendMsg(chatID, "[DATABASE ERROR] Зверніться до розробника: " + "@" + this.developer);
-                }
-            });
+    private void handleUserAndGameLogic(String userID, String chatID, Message message, String text) {
+        try {
+            if (!DatabaseControl.userExist(userID)) {
+                String username = message.getFrom().getUserName();
+                String name = message.getFrom().getFirstName();
+                String lastname = message.getFrom().getLastName();
+                int words = 0;
+                int insert_id = DatabaseControl.getUserCount() + 1;
 
-            if (text.equals("/start_raccoon_game")) {
-                if (findGameByChatID(chatID) != null) {
-                    sendMsg(chatID, "Гра вже розпочалася!");
-                } else {
-                    activeGames.add(new Game(message.getFrom().getUserName(),String.valueOf(chatID)));
-
-                    sendGameMenu(chatID, message.getFrom().getUserName());
+                if (DatabaseControl.insertUser(insert_id, username, name, lastname, words, userID)) {
+                    System.out.println("[RaccoonBot] User with ID: " + userID + " inserted successfully");
                 }
             }
-            if(text.equals("/stop_raccoon_game")){
-                if(findGameByChatID(chatID) != null){
-                    activeGames.remove(findGameByChatID(chatID));
-                    sendMsg(chatID, "Гру завершено");
 
-                }
-                else{
-                    sendMsg(chatID, "Гру не розпочато");
-                }
+            switch (text) {
+                case "/start":
+                    handleStartCommand(message, chatID);
+                    break;
+
+                case "/start_raccoon_game":
+                    handleStartGame(chatID, message);
+                    break;
+
+                case "/stop_raccoon_game":
+                    handleStopGame(chatID, message);
+                    break;
+
+                case "/top":
+                    sendTopUsers(chatID);
+                    break;
+
+                default:
+                    break;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            sendMsg(chatID, "[DATABASE ERROR] Зверніться до розробника: " + "@" + this.developer);
+        }
+    }
+
+    private void handleStartCommand(Message message, String chatID) {
+        if (isGroupChat(message)) {
+            sendMsg(chatID, "Ця команда доступна в особистому чаті з ботом " + "@RaccoonGameMBot");
+        } else {
+            sendMsg(chatID, "Привіт, я RaccoonBot для гри в крокодила.");
+        }
+    }
+
+    private void handleStartGame(String chatID, Message message) {
+        if (isPrivateChat(message)) {
+            sendMsg(chatID, "Для того щоб розпочати гру додай мене у групу з гравцями та введи команду /start_raccoon_game заново.");
+        } else {
+            if (findGameByChatID(chatID) != null) {
+                sendMsg(chatID, "Гра вже розпочалася!");
+            } else {
+                activeGames.add(new Game(message.getFrom().getUserName(), chatID));
+                sendGameMenu(chatID, message.getFrom().getUserName());
             }
         }
     }
 
-    private void sendGameMenu(String chatID, String username){
-        String sendMsg = new String("Слово пояснює: " + username);
+    private void handleStopGame(String chatID, Message message) {
+        if(isPrivateChat(message)){
+            sendMsg(chatID, "Ця команда доступна лише в груповому чаті.");
+        }else {
+            if (findGameByChatID(chatID) != null) {
+                activeGames.remove(findGameByChatID(chatID));
+                sendMsg(chatID, "Гру завершено");
+            } else {
+                sendMsg(chatID, "Гру не розпочато");
+            }
+        }
+    }
 
+    private void sendTopUsers(String chatID) {
+        executorService.submit(() -> {
+            try {
+                sendMsg(chatID, DatabaseControl.getTopUsers());
+            } catch (SQLException e) {
+                sendMsg(chatID, "[DATABASE ERROR] Помилка при отриманні списку користувачів.");
+            }
+        });
+    }
+
+    private boolean isPrivateChat(Message message) {
+        return message.getChat().getType().equals("private");
+    }
+
+    private boolean isGroupChat(Message message) {
+        return message.getChat().getType().equals("group");
+    }
+
+    private void sendGameMenu(String chatID, String username) {
         SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(String.valueOf(chatID));
-        sendMessage.setText(sendMsg);
+        sendMessage.setChatId(chatID);
+        sendMessage.setText("Слово пояснює: " + username);
 
         InlineKeyboardButton seeWordBtn = new InlineKeyboardButton();
         seeWordBtn.setText("Подивитися слово");
@@ -94,15 +147,8 @@ public class RaccoonBot extends TelegramLongPollingBot{
         newWordBtn.setText("Нове слово");
         newWordBtn.setCallbackData("newWordButtonCallBack");
 
-
         InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
-
-        List<InlineKeyboardButton> row = new ArrayList<>();
-        row.add(seeWordBtn);
-        row.add(newWordBtn);
-
-        keyboardMarkup.setKeyboard(List.of(row));
-
+        keyboardMarkup.setKeyboard(List.of(Arrays.asList(seeWordBtn, newWordBtn)));
         sendMessage.setReplyMarkup(keyboardMarkup);
 
         try {
@@ -110,7 +156,6 @@ public class RaccoonBot extends TelegramLongPollingBot{
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
-
     }
 
     private void sendMsg(String chatID, String text) {
@@ -131,7 +176,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     @Override
-    public String getBotToken(){
+    public String getBotToken() {
         return this.botToken;
     }
 
@@ -142,9 +187,9 @@ public class RaccoonBot extends TelegramLongPollingBot{
                 .orElse(null);
     }
 
-    private void loadConfig(){
+    private void loadConfig() {
         Properties properties = new Properties();
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("RaccoonConfig.properties");) {
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("RaccoonConfig.properties")) {
             properties.load(inputStream);
             this.botToken = properties.getProperty("bot.token");
             this.botUsername = properties.getProperty("bot.username");
@@ -152,5 +197,9 @@ public class RaccoonBot extends TelegramLongPollingBot{
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void shutdownExecutorService() {
+        executorService.shutdown();
     }
 }

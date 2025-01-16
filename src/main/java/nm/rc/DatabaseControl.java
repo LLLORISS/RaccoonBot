@@ -1,4 +1,8 @@
 package nm.rc;
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.*;
@@ -9,70 +13,97 @@ public class DatabaseControl {
     private static String DB_USER;
     private static String DB_PASSWORD;
 
+    private static HikariDataSource dataSource;
+
     static {
         loadDBConfig();
 
-        System.out.println(DB_URL);
-        System.out.println(DB_USER);
-        System.out.println(DB_PASSWORD);
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(DB_URL);
+        config.setUsername(DB_USER);
+        config.setPassword(DB_PASSWORD);
+        config.setMaximumPoolSize(10);
+        config.setPoolName("RaccoonPool");
+        dataSource = new HikariDataSource(config);
     }
 
     public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        return dataSource.getConnection();
     }
 
     public static int getUserCount() throws SQLException {
         String query = "SELECT COUNT(*) FROM users";
-        try (ResultSet resultSet = executeQuery(query)) {
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
             if (resultSet.next()) {
                 return resultSet.getInt(1);
-            } else {
-                return 0;
             }
+            return 0;
         }
     }
 
     public static boolean userExist(String userId) throws SQLException {
         String query = "SELECT 1 FROM users WHERE userid = ?";
-        try (ResultSet resultSet = executeQuery(query, userId)) {
-            return resultSet.next();
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, userId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
         }
     }
 
     public static boolean insertUser(int id, String username, String name, String lastname, int words, String userID) throws SQLException {
         String query = "INSERT INTO users (id, username, name, lastname, words, userID) VALUES (?, ?, ?, ?, ?, ?)";
-        int rowsAffected = executeUpdate(query, id, username, name, lastname, words, userID);
-        return rowsAffected > 0;
-    }
-
-    public static ResultSet executeQuery(String query, Object... params) throws SQLException {
-        Connection connection = getConnection();
-        PreparedStatement statement = connection.prepareStatement(query);
-        setParameters(statement, params);
-        return statement.executeQuery();
-    }
-
-    public static int executeUpdate(String query, Object... params) throws SQLException {
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-            setParameters(statement, params);
-            return statement.executeUpdate();
+            statement.setInt(1, id);
+            statement.setString(2, username);
+            statement.setString(3, name);
+            statement.setString(4, lastname);
+            statement.setInt(5, words);
+            statement.setString(6, userID);
+            int rowsAffected = statement.executeUpdate();
+            return rowsAffected > 0;
         }
     }
 
-    private static void setParameters(PreparedStatement statement, Object... params) throws SQLException {
-        for (int i = 0; i < params.length; i++) {
-            statement.setObject(i + 1, params[i]);
+    public static String getTopUsers() throws SQLException {
+        String query = "SELECT username, words FROM users ORDER BY words DESC LIMIT 10";
+        StringBuilder result = new StringBuilder("Топ 10 гравців:\n");
+
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
+            int id = 1;
+            int count = 0;
+            while (resultSet.next() && count < 10) {
+                String username = resultSet.getString("username");
+
+                if ("GroupAnonymousBot".equals(username)) {
+                    continue;
+                }
+
+                int words = resultSet.getInt("words");
+                result.append(id).append(". @").append(username).append(" Відгаданих слів: ").append(words).append("\n");
+                id++;
+                count++;
+            }
         }
+
+        return result.toString();
     }
 
-    public static void closeResources(Connection connection, PreparedStatement statement, ResultSet resultSet) {
-        try {
-            if (resultSet != null) resultSet.close();
-            if (statement != null) statement.close();
-            if (connection != null) connection.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
+    public static void closeResources(AutoCloseable... resources) {
+        for (AutoCloseable resource : resources) {
+            try {
+                if (resource != null) {
+                    resource.close();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
