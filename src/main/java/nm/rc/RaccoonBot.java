@@ -1,7 +1,9 @@
 package nm.rc;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -26,6 +28,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
 
     public RaccoonBot(){
         loadConfig();
+        telegramBotInit();
     }
 
     private final Set<Game> activeGames = new HashSet<>();
@@ -201,5 +204,27 @@ public class RaccoonBot extends TelegramLongPollingBot{
 
     public void shutdownExecutorService() {
         executorService.shutdown();
+    }
+
+    public void setBotCommands(){
+        List<BotCommand> commandList = new ArrayList<>();
+
+        commandList.add(new BotCommand("/start", "Запуск бота"));
+        commandList.add(new BotCommand("/start_raccoon_game", "Розпочати гру"));
+        commandList.add(new BotCommand("/stop_raccoon_game", "Завершити гру"));
+        commandList.add(new BotCommand("/top", "Топ 10 найкращих гравців"));
+
+        SetMyCommands setMyCommands = new SetMyCommands();
+        setMyCommands.setCommands(commandList);
+
+        try {
+            execute(setMyCommands);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void telegramBotInit(){
+        setBotCommands();
     }
 }
