@@ -6,6 +6,7 @@ public class Game {
     private String currentPlayerID;
     private String chatID;
     private boolean isActive;
+    private String prevMenuMsgID;
 
     public Game(String currentPlayer, String currentPlayerID, String chatID, String word){
         this.word = word;
@@ -13,23 +14,28 @@ public class Game {
         this.currentPlayerID = currentPlayerID;
         this.chatID = chatID;
         this.isActive = false;
-    }
-
-    public String getWord() {
-        return word;
-    }
-
-    public String getPlayer() {
-        return currentPlayer;
-    }
-
-    public String getChatId() {
-        return chatID;
+        this.prevMenuMsgID = null;
     }
 
     public void swapGameInfo(String newPlayer, String newWord){
         this.currentPlayer = newPlayer;
         this.word = newWord;
+    }
+
+    public void setIsActive(boolean isActive){
+        this.isActive = isActive;
+    }
+
+    public void setWord(String word){
+        this.word = word;
+    }
+
+    public void setPrevMenuMsgID(String prevMenuMsgID){
+        this.prevMenuMsgID = prevMenuMsgID;
+    }
+
+    public String getPrevMenuMsgID(){
+        return this.prevMenuMsgID;
     }
 
     public boolean getIsActive(){
@@ -44,11 +50,15 @@ public class Game {
         return this.currentPlayerID;
     }
 
-    public void setIsActive(boolean isActive){
-        this.isActive = isActive;
+    public String getWord() {
+        return word;
     }
 
-    public void setWord(String word){
-        this.word = word;
+    public String getPlayer() {
+        return currentPlayer;
+    }
+
+    public String getChatId() {
+        return chatID;
     }
 }
