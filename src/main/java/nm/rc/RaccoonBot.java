@@ -227,7 +227,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
 
         if (prevMenuID != null && game.getChatId() != null) {
             DeleteMessage deleteMessage = new DeleteMessage();
-            deleteMessage.setChatId(game.getChatId().toString());
+            deleteMessage.setChatId(game.getChatId());
             deleteMessage.setMessageId(Integer.valueOf(prevMenuID));
 
             executorService.submit(() -> {
@@ -256,16 +256,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
         sendMessage.setChatId(game.getChatId());
         sendMessage.setText("Слово пояснює: " + username);
 
-        InlineKeyboardButton seeWordBtn = new InlineKeyboardButton();
-        seeWordBtn.setText("Подивитися слово");
-        seeWordBtn.setCallbackData("seeWordButtonCallBack");
-
-        InlineKeyboardButton newWordBtn = new InlineKeyboardButton();
-        newWordBtn.setText("Нове слово");
-        newWordBtn.setCallbackData("newWordButtonCallBack");
-
-        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
-        keyboardMarkup.setKeyboard(List.of(Arrays.asList(seeWordBtn, newWordBtn)));
+        InlineKeyboardMarkup keyboardMarkup = getInlineKeyboardMarkup();
         sendMessage.setReplyMarkup(keyboardMarkup);
 
         executorService.submit(() -> {
@@ -277,6 +268,20 @@ public class RaccoonBot extends TelegramLongPollingBot{
                 e.printStackTrace();
             }
         });
+    }
+
+    private static InlineKeyboardMarkup getInlineKeyboardMarkup() {
+        InlineKeyboardButton seeWordBtn = new InlineKeyboardButton();
+        seeWordBtn.setText("Подивитися слово");
+        seeWordBtn.setCallbackData("seeWordButtonCallBack");
+
+        InlineKeyboardButton newWordBtn = new InlineKeyboardButton();
+        newWordBtn.setText("Нове слово");
+        newWordBtn.setCallbackData("newWordButtonCallBack");
+
+        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+        keyboardMarkup.setKeyboard(List.of(Arrays.asList(seeWordBtn, newWordBtn)));
+        return keyboardMarkup;
     }
 
     private void sendMsg(String chatID, String text) {
