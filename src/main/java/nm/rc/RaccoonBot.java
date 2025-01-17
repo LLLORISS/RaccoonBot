@@ -100,7 +100,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
                             deletePrevMenuMsg(game);
                         });
 
-                        sendGameMenu(chatID, game);
+                        sendGameMenu(username, game);
 
                         //IncreaseWord
                     }
@@ -130,7 +130,6 @@ public class RaccoonBot extends TelegramLongPollingBot{
             } else {
                 activeGames.add(new Game(message.getFrom().getUserName(), String.valueOf(message.getFrom().getId()), chatID, getRandomWord()));
                 sendGameMenu(message.getFrom().getUserName(), findGameByChatID(chatID));
-
             }
         }
     }
@@ -175,12 +174,22 @@ public class RaccoonBot extends TelegramLongPollingBot{
 
             switch(callbackData){
                 case "seeWordButtonCallBack": {
-                    text = "Слово: " + game.getWord();
+                    if(game.getCurrentPlayerID().equals(String.valueOf(update.getCallbackQuery().getFrom().getId()))) {
+                        text = "Слово: " + game.getWord();
+                    }
+                    else{
+                        text = "Слово пояснює інший гравець";
+                    }
                     break;
                 }
                 case "newWordButtonCallBack":{
-                    game.setWord(this.getRandomWord());
-                    text = "Нове слово: " + game.getWord();
+                    if(game.getCurrentPlayerID().equals(String.valueOf(update.getCallbackQuery().getFrom().getId()))) {
+                        game.setWord(this.getRandomWord());
+                        text = "Нове слово: " + game.getWord();
+                    }
+                    else{
+                        text = "Слово пояснює інший гравець";
+                    }
                     break;
                 }
             }
