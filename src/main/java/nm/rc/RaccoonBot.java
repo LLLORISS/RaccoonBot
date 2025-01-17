@@ -32,6 +32,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     private final Set<Game> activeGames = new HashSet<>();
+    private Set<String> words;
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -66,6 +67,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
                 }
 
                 case "/start_raccoon_game": {
+                    System.out.println("Word count = " + words.size());
                     handleStartGame(chatID, message);
                     break;
                 }
@@ -86,7 +88,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
                     if(handleUserGuess(game, text, String.valueOf(message.getFrom().getId()))){
                         String username = message.getFrom().getUserName();
                         sendMsg(chatID, username + " відгадав слово.");
-                        game.swapGameInfo(username);
+                        game.swapGameInfo(username, getRandomWord());
 
                         sendGameMenu(chatID, username);
 
@@ -116,10 +118,24 @@ public class RaccoonBot extends TelegramLongPollingBot{
             if (findGameByChatID(chatID) != null) {
                 sendMsg(chatID, "Гра вже розпочалася!");
             } else {
-                activeGames.add(new Game(String.valueOf(message.getFrom().getId()), chatID));
+                activeGames.add(new Game(message.getFrom().getUserName(), String.valueOf(message.getFrom().getId()), chatID, getRandomWord()));
                 sendGameMenu(chatID, message.getFrom().getUserName());
             }
         }
+    }
+
+    private String getRandomWord(){
+        Iterator<String> iterator = words.iterator();
+
+        Random random = new Random();
+        int index = random.nextInt(words.size());
+
+        String randomWord = null;
+        for (int i = 0; i <= index; i++) {
+            randomWord = iterator.next();
+        }
+
+        return randomWord;
     }
 
     private void handleStopGame(String chatID, Message message) {
@@ -256,6 +272,10 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     public void telegramBotInit(){
+        executorService.submit(() -> {
+            this.words = new HashSet<>();
+            this.words = WordLoader.loadWords();
+        });
         setBotCommands();
     }
 }

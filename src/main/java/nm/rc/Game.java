@@ -7,9 +7,10 @@ public class Game {
     private String chatID;
     private boolean isActive;
 
-    public Game(String currentPlayer, String chatID){
-        this.word = "testWord";
+    public Game(String currentPlayer, String currentPlayerID, String chatID, String word){
+        this.word = word;
         this.currentPlayer = currentPlayer;
+        this.currentPlayerID = currentPlayerID;
         this.chatID = chatID;
         this.isActive = false;
     }
@@ -26,9 +27,9 @@ public class Game {
         return chatID;
     }
 
-    public void swapGameInfo(String currentPlayer){
-        this.currentPlayer = currentPlayer;
-        //RandomWord
+    public void swapGameInfo(String newPlayer, String newWord){
+        this.currentPlayer = newPlayer;
+        this.word = newWord;
     }
 
     public boolean getIsActive(){
