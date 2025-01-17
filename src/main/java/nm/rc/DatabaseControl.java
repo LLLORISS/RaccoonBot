@@ -95,6 +95,22 @@ public class DatabaseControl {
         return result.toString();
     }
 
+    public static void increaseWords(String userID){
+        String query = "UPDATE users SET words = words + 1 WHERE userID = ?";
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, userID);
+            int rowsAffected = statement.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Words successfully incremented for user: " + userID);
+            } else {
+                System.out.println("User not found: " + userID);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void closeResources(AutoCloseable... resources) {
         for (AutoCloseable resource : resources) {
             try {

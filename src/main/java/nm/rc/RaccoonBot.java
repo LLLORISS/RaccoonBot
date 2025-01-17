@@ -12,6 +12,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import javax.xml.crypto.Data;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
@@ -94,15 +95,14 @@ public class RaccoonBot extends TelegramLongPollingBot{
                     if(handleUserGuess(game, text, String.valueOf(message.getFrom().getId()))){
                         String username = message.getFrom().getUserName();
                         sendMsg(chatID, username + " відгадав слово.");
-                        game.swapGameInfo(username, getRandomWord());
 
                         executorService.submit(() -> {
                             deletePrevMenuMsg(game);
+                            DatabaseControl.increaseWords(game.getCurrentPlayerID());
                         });
 
+                        game.swapGameInfo(username, getRandomWord());
                         sendGameMenu(username, game);
-
-                        //IncreaseWord
                     }
                     break;
                 }
@@ -256,7 +256,16 @@ public class RaccoonBot extends TelegramLongPollingBot{
         sendMessage.setChatId(game.getChatId());
         sendMessage.setText("Слово пояснює: " + username);
 
-        InlineKeyboardMarkup keyboardMarkup = getInlineKeyboardMarkup();
+        InlineKeyboardButton seeWordBtn = new InlineKeyboardButton();
+        seeWordBtn.setText("Подивитися слово");
+        seeWordBtn.setCallbackData("seeWordButtonCallBack");
+
+        InlineKeyboardButton newWordBtn = new InlineKeyboardButton();
+        newWordBtn.setText("Нове слово");
+        newWordBtn.setCallbackData("newWordButtonCallBack");
+
+        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+        keyboardMarkup.setKeyboard(List.of(Arrays.asList(seeWordBtn, newWordBtn)));
         sendMessage.setReplyMarkup(keyboardMarkup);
 
         executorService.submit(() -> {
@@ -268,20 +277,6 @@ public class RaccoonBot extends TelegramLongPollingBot{
                 e.printStackTrace();
             }
         });
-    }
-
-    private static InlineKeyboardMarkup getInlineKeyboardMarkup() {
-        InlineKeyboardButton seeWordBtn = new InlineKeyboardButton();
-        seeWordBtn.setText("Подивитися слово");
-        seeWordBtn.setCallbackData("seeWordButtonCallBack");
-
-        InlineKeyboardButton newWordBtn = new InlineKeyboardButton();
-        newWordBtn.setText("Нове слово");
-        newWordBtn.setCallbackData("newWordButtonCallBack");
-
-        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
-        keyboardMarkup.setKeyboard(List.of(Arrays.asList(seeWordBtn, newWordBtn)));
-        return keyboardMarkup;
     }
 
     private void sendMsg(String chatID, String text) {
