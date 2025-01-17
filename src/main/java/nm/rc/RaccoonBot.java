@@ -60,24 +60,40 @@ public class RaccoonBot extends TelegramLongPollingBot{
             }
 
             switch (text) {
-                case "/start":
+                case "/start": {
                     handleStartCommand(message, chatID);
                     break;
+                }
 
-                case "/start_raccoon_game":
+                case "/start_raccoon_game": {
                     handleStartGame(chatID, message);
                     break;
+                }
 
-                case "/stop_raccoon_game":
+                case "/stop_raccoon_game": {
                     handleStopGame(chatID, message);
                     break;
+                }
 
-                case "/top":
+                case "/top": {
                     sendTopUsers(chatID);
                     break;
+                }
 
-                default:
+                default: {
+                    Game game = findGameByChatID(chatID);
+
+                    if(handleUserGuess(game, text, String.valueOf(message.getFrom().getId()))){
+                        String username = message.getFrom().getUserName();
+                        sendMsg(chatID, username + " відгадав слово.");
+                        game.swapGameInfo(username);
+
+                        sendGameMenu(chatID, username);
+
+                        //IncreaseWord
+                    }
                     break;
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -100,7 +116,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
             if (findGameByChatID(chatID) != null) {
                 sendMsg(chatID, "Гра вже розпочалася!");
             } else {
-                activeGames.add(new Game(message.getFrom().getUserName(), chatID));
+                activeGames.add(new Game(String.valueOf(message.getFrom().getId()), chatID));
                 sendGameMenu(chatID, message.getFrom().getUserName());
             }
         }
@@ -127,6 +143,21 @@ public class RaccoonBot extends TelegramLongPollingBot{
                 sendMsg(chatID, "[DATABASE ERROR] Помилка при отриманні списку користувачів.");
             }
         });
+    }
+
+    private boolean handleUserGuess(Game game, String userText, String sender){
+
+        if(game != null){
+            String wordToGuess = game.getWord();
+
+            if(userText.equalsIgnoreCase(wordToGuess) && sender.equals(game.getCurrentPlayerID())){
+                return true;
+            }
+            else{
+                return false;
+            }
+        }
+        return false;
     }
 
     private boolean isPrivateChat(Message message) {

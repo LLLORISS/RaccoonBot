@@ -3,6 +3,7 @@ package nm.rc;
 public class Game {
     private String word;
     private String currentPlayer;
+    private String currentPlayerID;
     private String chatID;
     private boolean isActive;
 
@@ -25,20 +26,21 @@ public class Game {
         return chatID;
     }
 
+    public void swapGameInfo(String currentPlayer){
+        this.currentPlayer = currentPlayer;
+        //RandomWord
+    }
+
     public boolean getIsActive(){
         return this.isActive;
     }
 
-    public void setWord(String word){
-        this.word = word;
+    public String getCurrentPlayer(){
+        return this.currentPlayer;
     }
 
-    public void setCurrentPlayer(String currentPlayer){
-        this.currentPlayer = currentPlayer;
-    }
-
-    public void setChatID(String chatID){
-        this.chatID = chatID;
+    public String getCurrentPlayerID(){
+        return this.currentPlayerID;
     }
 
     public void setIsActive(boolean isActive){
