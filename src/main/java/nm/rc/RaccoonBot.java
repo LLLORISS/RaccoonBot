@@ -1,5 +1,6 @@
 package nm.rc;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -24,7 +25,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
     private String botToken;
     private String developer;
 
-    private final ExecutorService executorService = Executors.newFixedThreadPool(2);
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     public RaccoonBot(){
         loadConfig();
@@ -36,7 +37,10 @@ public class RaccoonBot extends TelegramLongPollingBot{
 
     @Override
     public void onUpdateReceived(Update update) {
-        if (update.hasMessage()) {
+        if(update.hasCallbackQuery()){
+            String chatID = String.valueOf(update.getCallbackQuery().getMessage().getChatId());
+            handleCallBack(update, findGameByChatID(chatID));
+        } else if (update.hasMessage()) {
             Message message = update.getMessage();
             String text = message.getText();
             String chatID = String.valueOf(message.getChatId());
@@ -124,18 +128,12 @@ public class RaccoonBot extends TelegramLongPollingBot{
         }
     }
 
-    private String getRandomWord(){
-        Iterator<String> iterator = words.iterator();
-
-        Random random = new Random();
-        int index = random.nextInt(words.size());
-
-        String randomWord = null;
-        for (int i = 0; i <= index; i++) {
-            randomWord = iterator.next();
+    private String getRandomWord() {
+        if (words == null || words.isEmpty()) {
+            return "Немає доступних слів";
         }
-
-        return randomWord;
+        List<String> wordList = new ArrayList<>(words);
+        return wordList.get(new Random().nextInt(wordList.size()));
     }
 
     private void handleStopGame(String chatID, Message message) {
@@ -159,6 +157,38 @@ public class RaccoonBot extends TelegramLongPollingBot{
                 sendMsg(chatID, "[DATABASE ERROR] Помилка при отриманні списку користувачів.");
             }
         });
+    }
+
+    private void handleCallBack(Update update, Game game){
+        if(update.hasCallbackQuery()){
+            String callbackQueryId = update.getCallbackQuery().getId();
+            String callbackData = update.getCallbackQuery().getData();
+
+            String text = "";
+
+            switch(callbackData){
+                case "seeWordButtonCallBack": {
+                    text = "Слово: " + game.getWord();
+                    break;
+                }
+                case "newWordButtonCallBack":{
+                    game.setWord(this.getRandomWord());
+                    text = "Нове слово: " + game.getWord();
+                    break;
+                }
+            }
+
+            AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
+            answerCallbackQuery.setCallbackQueryId(callbackQueryId);
+            answerCallbackQuery.setText(text);
+            answerCallbackQuery.setShowAlert(true);
+
+            try{
+                execute(answerCallbackQuery);
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+        }
     }
 
     private boolean handleUserGuess(Game game, String userText, String sender){
@@ -272,10 +302,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     public void telegramBotInit(){
-        executorService.submit(() -> {
-            this.words = new HashSet<>();
-            this.words = WordLoader.loadWords();
-        });
+        this.words = WordLoader.loadWords();
         setBotCommands();
     }
 }

@@ -47,4 +47,8 @@ public class Game {
     public void setIsActive(boolean isActive){
         this.isActive = isActive;
     }
+
+    public void setWord(String word){
+        this.word = word;
+    }
 }
