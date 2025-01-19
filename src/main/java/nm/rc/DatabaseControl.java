@@ -6,6 +6,8 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.*;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Properties;
 
 public class DatabaseControl {
@@ -55,7 +57,7 @@ public class DatabaseControl {
     }
 
     public static boolean insertUser(int id, String username, String name, String lastname, int words, String userID) throws SQLException {
-        String query = "INSERT INTO users (id, username, name, lastname, words, userID) VALUES (?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO users (id, username, name, lastname, words, userID, lastupdate) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setInt(1, id);
@@ -64,6 +66,7 @@ public class DatabaseControl {
             statement.setString(4, lastname);
             statement.setInt(5, words);
             statement.setString(6, userID);
+            statement.setString(7, getCurrentTime());
             int rowsAffected = statement.executeUpdate();
             return rowsAffected > 0;
         }
@@ -111,6 +114,57 @@ public class DatabaseControl {
         }
     }
 
+    public static void updateInfo(String userID, String username, String name, String lastname) {
+        String updateQuery = "UPDATE users SET username = ?, name = ?, lastname = ?, lastupdate WHERE user_id = ?";
+
+        try (Connection connection = DatabaseControl.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
+
+            preparedStatement.setString(1, username);
+            preparedStatement.setString(2, name);
+            preparedStatement.setString(3, lastname);
+            preparedStatement.setString(4, getCurrentTime());
+            preparedStatement.setString(4, userID);
+
+            int rowsUpdated = preparedStatement.executeUpdate();
+
+            if (rowsUpdated > 0) {
+                System.out.println("[RaccoonBot] Info has been successfully updated for user with ID: " + userID);
+            } else {
+                System.out.println("User with ID: " + userID + " not found.");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static boolean hasOneDayPassed(String userID) throws SQLException {
+        LocalDateTime lastUpdate = getLastUpdate(userID);
+
+        LocalDateTime currentTime = LocalDateTime.now();
+
+        Duration duration = Duration.between(lastUpdate, currentTime);
+
+        return duration.toDays() >= 1;
+    }
+
+    private static LocalDateTime getLastUpdate(String userID) throws SQLException {
+        String query = "SELECT lastupdate FROM users WHERE userID = ?";
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, userID);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    String lastUpdateStr = resultSet.getString("lastupdate");
+                    return LocalDateTime.parse(lastUpdateStr, java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                } else {
+                    return null;
+                }
+            }
+        }
+    }
+
     public static void closeResources(AutoCloseable... resources) {
         for (AutoCloseable resource : resources) {
             try {
@@ -137,5 +191,9 @@ public class DatabaseControl {
             e.printStackTrace();
             throw new RuntimeException("Помилка при завантаженні конфігурації", e);
         }
+    }
+
+    private static String getCurrentTime() {
+        return java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 }

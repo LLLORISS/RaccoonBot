@@ -1,7 +1,7 @@
 package nm.rc;
+
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
-import org.telegram.telegrambots.meta.api.methods.commands.DeleteMyCommands;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -12,12 +12,12 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import javax.xml.crypto.Data;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.*;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -30,13 +30,13 @@ public class RaccoonBot extends TelegramLongPollingBot{
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
+    private final Set<Game> activeGames = new HashSet<>();
+    private Set<String> words;
+
     public RaccoonBot(){
         loadConfig();
         telegramBotInit();
     }
-
-    private final Set<Game> activeGames = new HashSet<>();
-    private Set<String> words;
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -49,7 +49,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
             String chatID = String.valueOf(message.getChatId());
             String userID = String.valueOf(message.getFrom().getId());
 
-            executorService.submit(() -> handleUserAndGameLogic(userID, chatID, message, text));
+            CompletableFuture.runAsync(() -> handleUserAndGameLogic(userID, chatID, message, text), executorService);
         }
     }
 
@@ -65,6 +65,11 @@ public class RaccoonBot extends TelegramLongPollingBot{
                 if (DatabaseControl.insertUser(insert_id, username, name, lastname, words, userID)) {
                     System.out.println("[RaccoonBot] User with ID: " + userID + " inserted successfully");
                 }
+                else if(DatabaseControl.hasOneDayPassed(userID)){
+                    executorService.submit(() -> {
+                        DatabaseControl.updateInfo(userID, username, name, lastname);
+                    });
+                }
             }
 
             switch (text) {
@@ -74,7 +79,6 @@ public class RaccoonBot extends TelegramLongPollingBot{
                 }
 
                 case "/start_raccoon_game": {
-                    System.out.println("Word count = " + words.size());
                     handleStartGame(chatID, message);
                     break;
                 }
@@ -96,10 +100,14 @@ public class RaccoonBot extends TelegramLongPollingBot{
                         String username = message.getFrom().getUserName();
                         sendMsg(chatID, username + " відгадав слово.");
 
-                        executorService.submit(() -> {
-                            deletePrevMenuMsg(game);
+                        CompletableFuture.runAsync(() -> {
+                            if(deletePrevMenuMsg(game)){
+                                System.out.println("[RaccoonBot] Message has been successfully deleted.");
+                            } else {
+                                System.out.println("[RaccoonBot] Message has been successfully deleted.");
+                            }
                             DatabaseControl.increaseWords(game.getCurrentPlayerID());
-                        });
+                        }, executorService);
 
                         game.swapGameInfo(username, getRandomWord());
                         sendGameMenu(username, game);
@@ -107,7 +115,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
                     break;
                 }
             }
-        } catch (SQLException e) {
+        } catch (SQLException | TelegramApiException e) {
             e.printStackTrace();
             sendMsg(chatID, "[DATABASE ERROR] Зверніться до розробника: " + "@" + this.developer);
         }
@@ -121,10 +129,11 @@ public class RaccoonBot extends TelegramLongPollingBot{
         }
     }
 
-    private void handleStartGame(String chatID, Message message) {
+    private void handleStartGame(String chatID, Message message) throws TelegramApiException {
         if (isPrivateChat(message)) {
             sendMsg(chatID, "Для того щоб розпочати гру додай мене у групу з гравцями та введи команду /start_raccoon_game заново.");
         } else {
+
             if (findGameByChatID(chatID) != null) {
                 sendMsg(chatID, "Гра вже розпочалася!");
             } else {
@@ -156,13 +165,13 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     private void sendTopUsers(String chatID) {
-        executorService.submit(() -> {
+        CompletableFuture.runAsync(() -> {
             try {
                 sendMsg(chatID, DatabaseControl.getTopUsers());
             } catch (SQLException e) {
                 sendMsg(chatID, "[DATABASE ERROR] Помилка при отриманні списку користувачів.");
             }
-        });
+        }, executorService);
     }
 
     private void handleCallBack(Update update, Game game){
@@ -230,13 +239,14 @@ public class RaccoonBot extends TelegramLongPollingBot{
             deleteMessage.setChatId(game.getChatId());
             deleteMessage.setMessageId(Integer.valueOf(prevMenuID));
 
-            executorService.submit(() -> {
+            CompletableFuture.runAsync(() -> {
                 try {
                     execute(deleteMessage);
                 } catch (TelegramApiException e) {
                     e.printStackTrace();
                 }
-            });
+            }, executorService);
+
             return true;
         }
 
@@ -254,8 +264,23 @@ public class RaccoonBot extends TelegramLongPollingBot{
     private void sendGameMenu(String username, Game game) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(game.getChatId());
-        sendMessage.setText("Слово пояснює: " + username);
+        sendMessage.setText("Слово пояснює: @" + username);
 
+        InlineKeyboardMarkup keyboardMarkup = getInlineKeyboardMarkup();
+        sendMessage.setReplyMarkup(keyboardMarkup);
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                Message sentMessage = execute(sendMessage);
+                String messageID = String.valueOf(sentMessage.getMessageId());
+                game.setPrevMenuMsgID(messageID);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
+        }, executorService);
+    }
+
+    private static InlineKeyboardMarkup getInlineKeyboardMarkup() {
         InlineKeyboardButton seeWordBtn = new InlineKeyboardButton();
         seeWordBtn.setText("Подивитися слово");
         seeWordBtn.setCallbackData("seeWordButtonCallBack");
@@ -266,17 +291,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
 
         InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
         keyboardMarkup.setKeyboard(List.of(Arrays.asList(seeWordBtn, newWordBtn)));
-        sendMessage.setReplyMarkup(keyboardMarkup);
-
-        executorService.submit(() -> {
-            try {
-                Message sentMessage = execute(sendMessage);
-                String messageID = String.valueOf(sentMessage.getMessageId());
-                game.setPrevMenuMsgID(messageID);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-        });
+        return keyboardMarkup;
     }
 
     private void sendMsg(String chatID, String text) {
