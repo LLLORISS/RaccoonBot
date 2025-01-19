@@ -7,6 +7,7 @@ public class Game {
     private String chatID;
     private boolean isActive;
     private String prevMenuMsgID;
+    private int countAnswers;
 
     public Game(String currentPlayer, String currentPlayerID, String chatID, String word){
         this.word = word;
@@ -15,6 +16,7 @@ public class Game {
         this.chatID = chatID;
         this.isActive = false;
         this.prevMenuMsgID = null;
+        this.countAnswers = 0;
     }
 
     public void swapGameInfo(String newPlayer, String newWord){
@@ -32,6 +34,10 @@ public class Game {
 
     public void setPrevMenuMsgID(String prevMenuMsgID){
         this.prevMenuMsgID = prevMenuMsgID;
+    }
+
+    public void increaseCountAnswers(){
+        this.countAnswers++;
     }
 
     public String getPrevMenuMsgID(){
@@ -60,5 +66,9 @@ public class Game {
 
     public String getChatId() {
         return chatID;
+    }
+
+    public int getCountAnswers(){
+        return this.countAnswers;
     }
 }

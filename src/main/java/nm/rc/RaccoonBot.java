@@ -107,6 +107,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
                                 System.out.println("[RaccoonBot] Message has been successfully deleted.");
                             }
                             DatabaseControl.increaseWords(game.getCurrentPlayerID());
+                            game.increaseCountAnswers();
                         }, executorService);
 
                         game.swapGameInfo(username, getRandomWord());
@@ -138,6 +139,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
                 sendMsg(chatID, "Гра вже розпочалася!");
             } else {
                 activeGames.add(new Game(message.getFrom().getUserName(), String.valueOf(message.getFrom().getId()), chatID, getRandomWord()));
+                sendMsg(chatID,"Розпочинаю гру. Загальна кількість зареєстрованих слів: " + WordLoader.getWordsCount());
                 sendGameMenu(message.getFrom().getUserName(), findGameByChatID(chatID));
             }
         }
@@ -155,9 +157,10 @@ public class RaccoonBot extends TelegramLongPollingBot{
         if(isPrivateChat(message)){
             sendMsg(chatID, "Ця команда доступна лише в груповому чаті.");
         }else {
-            if (findGameByChatID(chatID) != null) {
+            Game game = findGameByChatID(chatID);
+            if (game != null) {
                 activeGames.remove(findGameByChatID(chatID));
-                sendMsg(chatID, "Гру завершено");
+                sendMsg(chatID, "Гру завершено. Кількість відгаданих слів: " + game.getCountAnswers());
             } else {
                 sendMsg(chatID, "Гру не розпочато");
             }

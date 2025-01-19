@@ -9,23 +9,33 @@ import java.util.Set;
 
 public class WordLoader {
 
-    public static Set<String> loadWords() {
-        Set<String> words = new HashSet<>();
-        try (InputStream inputStream = WordLoader.class.getClassLoader().getResourceAsStream("WordsList.txt");
-             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+    private static Set<String> words = new HashSet<>();
 
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] wordArray = line.split(";");
-                for (String word : wordArray) {
-                    if (!word.trim().isEmpty()) {
-                        words.add(word.trim());
+    public static Set<String> loadWords() {
+        if (words.isEmpty()) {
+            try (InputStream inputStream = WordLoader.class.getClassLoader().getResourceAsStream("WordsList.txt");
+                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String[] wordArray = line.split(";");
+                    for (String word : wordArray) {
+                        if (!word.trim().isEmpty()) {
+                            words.add(word.trim());
+                        }
                     }
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
         return words;
+    }
+
+    public static int getWordsCount() {
+        if (words.isEmpty()) {
+            loadWords();
+        }
+        return words.size();
     }
 }
