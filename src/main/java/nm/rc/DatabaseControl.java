@@ -15,7 +15,7 @@ public class DatabaseControl {
     private static String DB_USER;
     private static String DB_PASSWORD;
 
-    private static HikariDataSource dataSource;
+    private static final HikariDataSource dataSource;
 
     static {
         loadDBConfig();
@@ -144,6 +144,7 @@ public class DatabaseControl {
 
         LocalDateTime currentTime = LocalDateTime.now();
 
+        assert lastUpdate != null;
         Duration duration = Duration.between(lastUpdate, currentTime);
 
         return duration.toDays() >= 1;

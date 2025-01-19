@@ -225,12 +225,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
         if(game != null){
             String wordToGuess = game.getWord();
 
-            if(userText.equalsIgnoreCase(wordToGuess) && sender.equals(game.getCurrentPlayerID())){
-                return true;
-            }
-            else{
-                return false;
-            }
+            return userText.equalsIgnoreCase(wordToGuess) && sender.equals(game.getCurrentPlayerID());
         }
         return false;
     }

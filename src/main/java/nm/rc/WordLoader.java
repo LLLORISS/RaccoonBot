@@ -9,19 +9,21 @@ import java.util.Set;
 
 public class WordLoader {
 
-    private static Set<String> words = new HashSet<>();
+    private static final Set<String> words = new HashSet<>();
 
     public static Set<String> loadWords() {
         if (words.isEmpty()) {
-            try (InputStream inputStream = WordLoader.class.getClassLoader().getResourceAsStream("WordsList.txt");
-                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            try (InputStream inputStream = WordLoader.class.getClassLoader().getResourceAsStream("WordsList.txt")) {
+                assert inputStream != null;
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
 
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    String[] wordArray = line.split(";");
-                    for (String word : wordArray) {
-                        if (!word.trim().isEmpty()) {
-                            words.add(word.trim());
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        String[] wordArray = line.split(";");
+                        for (String word : wordArray) {
+                            if (!word.trim().isEmpty()) {
+                                words.add(word.trim());
+                            }
                         }
                     }
                 }
