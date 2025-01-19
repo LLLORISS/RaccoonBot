@@ -30,7 +30,8 @@ public class RaccoonBot extends TelegramLongPollingBot{
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-    private final Set<Game> activeGames = new HashSet<>();
+    private final Map<String, Game> activeGames = new HashMap<>();
+
     private Set<String> words;
 
     public RaccoonBot(){
@@ -42,7 +43,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
     public void onUpdateReceived(Update update) {
         if(update.hasCallbackQuery()){
             String chatID = String.valueOf(update.getCallbackQuery().getMessage().getChatId());
-            handleCallBack(update, findGameByChatID(chatID));
+            handleCallBack(update, activeGames.get(chatID));
         } else if (update.hasMessage()) {
             Message message = update.getMessage();
             String text = message.getText();
@@ -94,7 +95,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
                 }
 
                 default: {
-                    Game game = findGameByChatID(chatID);
+                    Game game = activeGames.get(chatID);
 
                     if(handleUserGuess(game, text, String.valueOf(message.getFrom().getId()))){
                         String username = message.getFrom().getUserName();
@@ -134,13 +135,13 @@ public class RaccoonBot extends TelegramLongPollingBot{
         if (isPrivateChat(message)) {
             sendMsg(chatID, "Для того щоб розпочати гру додай мене у групу з гравцями та введи команду /start_raccoon_game заново.");
         } else {
-
-            if (findGameByChatID(chatID) != null) {
+            Game game = activeGames.get(chatID);
+            if (game != null) {
                 sendMsg(chatID, "Гра вже розпочалася!");
             } else {
-                activeGames.add(new Game(message.getFrom().getUserName(), String.valueOf(message.getFrom().getId()), chatID, getRandomWord()));
+                activeGames.put(chatID, new Game(message.getFrom().getUserName(), String.valueOf(message.getFrom().getId()), chatID, getRandomWord()));
                 sendMsg(chatID,"Розпочинаю гру. Загальна кількість зареєстрованих слів: " + WordLoader.getWordsCount());
-                sendGameMenu(message.getFrom().getUserName(), findGameByChatID(chatID));
+                sendGameMenu(message.getFrom().getUserName(), activeGames.get(chatID));
             }
         }
     }
@@ -157,9 +158,9 @@ public class RaccoonBot extends TelegramLongPollingBot{
         if(isPrivateChat(message)){
             sendMsg(chatID, "Ця команда доступна лише в груповому чаті.");
         }else {
-            Game game = findGameByChatID(chatID);
+            Game game = activeGames.get(chatID);
             if (game != null) {
-                activeGames.remove(findGameByChatID(chatID));
+                activeGames.remove(chatID);
                 sendMsg(chatID, "Гру завершено. Кількість відгаданих слів: " + game.getCountAnswers());
             } else {
                 sendMsg(chatID, "Гру не розпочато");
@@ -178,7 +179,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     private void handleCallBack(Update update, Game game){
-        if(update.hasCallbackQuery()){
+        if(update.hasCallbackQuery() && game != null){
             String callbackQueryId = update.getCallbackQuery().getId();
             String callbackData = update.getCallbackQuery().getData();
 
@@ -317,13 +318,6 @@ public class RaccoonBot extends TelegramLongPollingBot{
     @Override
     public String getBotToken() {
         return this.botToken;
-    }
-
-    private Game findGameByChatID(String chatID) {
-        return activeGames.stream()
-                .filter(game -> game.getChatId().equals(chatID))
-                .findFirst()
-                .orElse(null);
     }
 
     private void loadConfig() {
