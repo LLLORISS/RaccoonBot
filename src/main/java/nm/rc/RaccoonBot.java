@@ -39,9 +39,10 @@ public class RaccoonBot extends TelegramLongPollingBot{
 
     @Override
     public void onUpdateReceived(Update update) {
+        System.out.println("[RaccoonBot] onUpdateReceived has been called");
         if(update.hasCallbackQuery()){
             String chatID = String.valueOf(update.getCallbackQuery().getMessage().getChatId());
-            handleCallBack(update, activeGames.get(chatID));
+            handleCallback(update, activeGames.get(chatID));
         } else if (update.hasMessage()) {
             Message message = update.getMessage();
             String text = message.getText();
@@ -54,6 +55,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
 
     private void handleUserAndGameLogic(String userID, String chatID, Message message, String text) {
         try {
+            System.out.println("[RaccoonBot] handleUserAndGameLogic has been called");
             if (!DatabaseControl.userExist(userID)) {
                 String username = message.getFrom().getUserName();
                 String name = message.getFrom().getFirstName();
@@ -122,6 +124,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     private void handleStartCommand(Message message, String chatID) {
+        System.out.println("[RaccoonBot] handleStart command has been called");
         if (isGroupChat(message)) {
             sendMsg(chatID, "Ця команда доступна в особистому чаті з ботом " + "@RaccoonGameMBot");
         } else {
@@ -130,6 +133,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     private void handleStartGame(String chatID, Message message) throws TelegramApiException {
+        System.out.println("[RaccoonBot] handleStartGame has been called");
         if (isPrivateChat(message)) {
             sendMsg(chatID, "Для того щоб розпочати гру додай мене у групу з гравцями та введи команду /start_raccoon_game заново.");
         } else {
@@ -153,6 +157,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     private void handleStopGame(String chatID, Message message) {
+        System.out.println("[RaccoonBot] handleStopGame has been called");
         if(isPrivateChat(message)){
             sendMsg(chatID, "Ця команда доступна лише в груповому чаті.");
         }else {
@@ -176,7 +181,8 @@ public class RaccoonBot extends TelegramLongPollingBot{
         }, executorService);
     }
 
-    private void handleCallBack(Update update, Game game){
+    private void handleCallback(Update update, Game game){
+        System.out.println("[RaccoonBot] handleCallBack has been called");
         if(update.hasCallbackQuery() && game != null){
             String callbackQueryId = update.getCallbackQuery().getId();
             String callbackData = update.getCallbackQuery().getData();
