@@ -56,7 +56,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
     private void handleUserAndGameLogic(String userID, String chatID, Message message, String text) {
         try {
             System.out.println("[RaccoonBot] handleUserAndGameLogic has been called");
-            if (!DatabaseControl.userExist(userID)) {
+            /*if (!DatabaseControl.userExist(userID)) {
                 String username = message.getFrom().getUserName();
                 String name = message.getFrom().getFirstName();
                 String lastname = message.getFrom().getLastName();
@@ -71,7 +71,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
                         DatabaseControl.updateInfo(userID, username, name, lastname);
                     });
                 }
-            }
+            }*/
 
             System.out.println("[RacoonBot] CommandText: " + text);
 
