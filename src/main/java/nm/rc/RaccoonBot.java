@@ -73,6 +73,8 @@ public class RaccoonBot extends TelegramLongPollingBot{
                 }
             }
 
+            System.out.println("[RacoonBot] CommandText: " + text);
+
             switch (text) {
                 case "/start": {
                     handleStartCommand(message, chatID);
@@ -174,6 +176,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
     private void sendTopUsers(String chatID) {
         CompletableFuture.runAsync(() -> {
             try {
+                System.out.println("[RaccoonBot] sendTopUsers command has been called");
                 sendMsg(chatID, DatabaseControl.getTopUsers());
             } catch (SQLException e) {
                 sendMsg(chatID, "[DATABASE ERROR] Помилка при отриманні списку користувачів.");
@@ -225,7 +228,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     private boolean handleUserGuess(Game game, String userText, String sender){
-
+        System.out.println("[RaccoonBot] handleUserGuess command has been called");
         if(game != null){
             String wordToGuess = game.getWord();
 
@@ -235,6 +238,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     private boolean deletePrevMenuMsg(Game game) {
+        System.out.println("[RaccoonBot] deletePrevMenuMsg has been called");
         String prevMenuID = game.getPrevMenuMsgID();
 
         if (prevMenuID != null && game.getChatId() != null) {
@@ -265,6 +269,8 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     private void sendGameMenu(String username, Game game) {
+        System.out.println("[RaccoonBot] sendGameMenu command has been called");
+
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(game.getChatId());
         sendMessage.setText("Слово пояснює: @" + username);
@@ -298,6 +304,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     private void sendMsg(String chatID, String text) {
+        System.out.println("[RaccoonBot] sendMsg command has been called");
         SendMessage message = new SendMessage();
         message.setChatId(chatID);
         message.setText(text);
