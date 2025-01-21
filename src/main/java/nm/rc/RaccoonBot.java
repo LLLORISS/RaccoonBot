@@ -71,6 +71,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
             }
 
             String command = text.replace("@RaccoonGameMBot", "").trim();
+            System.out.println("[RaccoonBot] Command: " + command);
 
             switch (command) {
                 case "/start": {
