@@ -3,23 +3,18 @@ package nm.rc;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.sql.*;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Properties;
 
 public class DatabaseControl {
-    private static String DB_URL;
-    private static String DB_USER;
-    private static String DB_PASSWORD;
+    private final static String DB_URL = System.getenv("DB_URL");
+    private final static String DB_USER = System.getenv("DB_USER");
+    private final static String DB_PASSWORD = System.getenv("DB_PASSWORD");
 
     private static final HikariDataSource dataSource;
 
     static {
-        loadDBConfig();
-
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(DB_URL);
         config.setUsername(DB_USER);
@@ -175,22 +170,6 @@ public class DatabaseControl {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    private static void loadDBConfig() {
-        Properties properties = new Properties();
-        try (InputStream inputStream = DatabaseControl.class.getClassLoader().getResourceAsStream("RaccoonConfig.properties")) {
-            if (inputStream == null) {
-                throw new IOException("Файл конфігурації 'RaccoonConfig.properties' не знайдено");
-            }
-            properties.load(inputStream);
-            DB_URL = properties.getProperty("db.DB_URL");
-            DB_USER = properties.getProperty("db.DB_USER");
-            DB_PASSWORD = properties.getProperty("db.DB_PASSWORD");
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Помилка при завантаженні конфігурації", e);
         }
     }
 

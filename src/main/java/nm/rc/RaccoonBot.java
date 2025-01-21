@@ -12,8 +12,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -24,9 +22,9 @@ import java.util.concurrent.Executors;
 
 public class RaccoonBot extends TelegramLongPollingBot{
 
-    private String botUsername;
-    private String botToken;
-    private String developer;
+    private final String botUsername = System.getenv("BOT_USERNAME");
+    private final String botToken = System.getenv("BOT_TOKEN");
+    private final String developer = System.getenv("DEVELOPER_USERNAME");
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
@@ -35,7 +33,6 @@ public class RaccoonBot extends TelegramLongPollingBot{
     private Set<String> words;
 
     public RaccoonBot(){
-        loadConfig();
         telegramBotInit();
     }
 
@@ -105,7 +102,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
                             if(deletePrevMenuMsg(game)){
                                 System.out.println("[RaccoonBot] Message has been successfully deleted.");
                             } else {
-                                System.out.println("[RaccoonBot] Message has been successfully deleted.");
+                                System.out.println("[RaccoonBot] Error while deleting message.");
                             }
                             DatabaseControl.increaseWords(game.getCurrentPlayerID());
                             game.increaseCountAnswers();
@@ -210,7 +207,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
             AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
             answerCallbackQuery.setCallbackQueryId(callbackQueryId);
             answerCallbackQuery.setText(text);
-            answerCallbackQuery.setShowAlert(true);
+            answerCallbackQuery.setShowAlert(Boolean.TRUE);
 
             try{
                 execute(answerCallbackQuery);
@@ -313,18 +310,6 @@ public class RaccoonBot extends TelegramLongPollingBot{
     @Override
     public String getBotToken() {
         return this.botToken;
-    }
-
-    private void loadConfig() {
-        Properties properties = new Properties();
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("RaccoonConfig.properties")) {
-            properties.load(inputStream);
-            this.botToken = properties.getProperty("bot.token");
-            this.botUsername = properties.getProperty("bot.username");
-            this.developer = properties.getProperty("developer.username");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public void shutdownExecutorService() {
