@@ -33,6 +33,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
     private Set<String> words;
 
     public RaccoonBot(){
+        System.out.println("BOT_TOKEN: " + System.getenv("BOT_TOKEN"));
         telegramBotInit();
     }
 
