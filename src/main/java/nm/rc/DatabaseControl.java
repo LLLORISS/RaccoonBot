@@ -25,7 +25,6 @@ public class DatabaseControl {
     }
 
     public static Connection getConnection() throws SQLException {
-        System.out.println("[RaccoonBot] getConnection method has been called");
         return dataSource.getConnection();
     }
 
@@ -42,7 +41,6 @@ public class DatabaseControl {
     }
 
     public static boolean userExist(String userId) throws SQLException {
-        System.out.println("[RaccoonBot] userExist method has been called");
         String query = "SELECT 1 FROM users WHERE userid = ?";
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
@@ -54,7 +52,6 @@ public class DatabaseControl {
     }
 
     public static boolean insertUser(int id, String username, String name, String lastname, int words, String userID) throws SQLException {
-        System.out.println("[RaccoonBot] insertUser method has been called");
         String query = "INSERT INTO users (id, username, name, lastname, words, userID, lastupdate) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
