@@ -12,6 +12,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -105,9 +106,9 @@ public class RaccoonBot extends TelegramLongPollingBot{
                 default: {
                     Game game = activeGames.get(chatID);
 
-                    if(handleUserGuess(game, command, String.valueOf(message.getFrom().getId()))){
+                    if(handleUserGuess(game, command, String.valueOf(message.getFrom().getId()), message.getMessageId())){
                         String username = message.getFrom().getUserName();
-                        sendMsg(chatID, username + " відгадав слово.");
+                        sendMsg(chatID, "@" + username + " відгадав слово.");
 
                         CompletableFuture.runAsync(() -> {
                             if(deletePrevMenuMsg(game)){
@@ -228,12 +229,26 @@ public class RaccoonBot extends TelegramLongPollingBot{
         }
     }
 
-    private boolean handleUserGuess(Game game, String userText, String sender){
-        if(game != null){
-            String wordToGuess = game.getWord();
-
-            return userText.equalsIgnoreCase(wordToGuess) && sender.equals(game.getCurrentPlayerID());
+    private boolean handleUserGuess(Game game, String userText, String sender, int messageID){
+        if (game == null) {
+            return false;
         }
+
+        String wordToGuess = game.getWord();
+        boolean isCorrectGuess = userText.equalsIgnoreCase(wordToGuess);
+        boolean isNotCurrentPlayer = !sender.equals(game.getCurrentPlayerID());
+
+        if (isCorrectGuess && isNotCurrentPlayer) {
+            return true;
+        }
+
+        if (isCorrectGuess && sender.equals(game.getCurrentPlayerID())) {
+            deleteMsg(game, messageID);
+            sendMsg(game.getChatId(), "@" + game.getCurrentPlayer() + " підказувати заборонено. Вам нараховано штраф -10 монет.");
+            // decrease money in future
+            return false;
+        }
+
         return false;
     }
 
@@ -253,6 +268,25 @@ public class RaccoonBot extends TelegramLongPollingBot{
                 }
             }, executorService);
 
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean deleteMsg(Game game, int messageID){
+        if(game != null){
+            DeleteMessage deleteMessage = new DeleteMessage();
+            deleteMessage.setChatId(game.getChatId());
+            deleteMessage.setMessageId(Integer.valueOf(messageID));
+
+            CompletableFuture.runAsync(() -> {
+                try {
+                    execute(deleteMessage);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+            }, executorService);
             return true;
         }
 
