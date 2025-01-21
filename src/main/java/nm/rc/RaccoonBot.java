@@ -53,22 +53,30 @@ public class RaccoonBot extends TelegramLongPollingBot{
 
     private void handleUserAndGameLogic(String userID, String chatID, Message message, String text) {
         try {
-            /*if (!DatabaseControl.userExist(userID)) {
-                String username = message.getFrom().getUserName();
-                String name = message.getFrom().getFirstName();
-                String lastname = message.getFrom().getLastName();
-                int words = 0;
-                int insert_id = DatabaseControl.getUserCount() + 1;
+            try {
+                if (!DatabaseControl.userExist(userID)) {
+                    String username = message.getFrom().getUserName();
+                    String name = message.getFrom().getFirstName();
+                    String lastname = message.getFrom().getLastName();
+                    int words = 0;
+                    int insert_id = DatabaseControl.getUserCount() + 1;
 
-                if (DatabaseControl.insertUser(insert_id, username, name, lastname, words, userID)) {
-                    System.out.println("[RaccoonBot] User with ID: " + userID + " inserted successfully");
+                    boolean userInserted = DatabaseControl.insertUser(insert_id, username, name, lastname, words, userID);
+                    if (userInserted) {
+                        System.out.println("[RaccoonBot] User with ID: " + userID + " inserted successfully");
+                    } else if (DatabaseControl.hasOneDayPassed(userID)) {
+                        executorService.submit(() -> {
+                            DatabaseControl.updateInfo(userID, username, name, lastname);
+                        });
+                    }
                 }
-                else if(DatabaseControl.hasOneDayPassed(userID)){
-                    executorService.submit(() -> {
-                        DatabaseControl.updateInfo(userID, username, name, lastname);
-                    });
-                }
-            }*/
+            } catch (SQLException e) {
+                System.out.println("[RaccoonBot] Database error: " + e.getMessage());
+                e.printStackTrace();
+            } catch (Exception e) {
+                System.out.println("[RaccoonBot] Unexpected error: " + e.getMessage());
+                e.printStackTrace();
+            }
 
             String command = text.replace("@RaccoonGameMBot", "").trim();
             System.out.println("[RaccoonBot] Command: " + command);
