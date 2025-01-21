@@ -120,8 +120,6 @@ public class RaccoonBot extends TelegramLongPollingBot{
         } catch (TelegramApiException e) {
             e.printStackTrace();
             sendMsg(chatID, "[DATABASE ERROR] Зверніться до розробника: " + "@" + this.developer);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
     }
 
