@@ -33,13 +33,11 @@ public class RaccoonBot extends TelegramLongPollingBot{
     private Set<String> words;
 
     public RaccoonBot(){
-        System.out.println("BOT_TOKEN: " + System.getenv("BOT_TOKEN"));
         telegramBotInit();
     }
 
     @Override
     public void onUpdateReceived(Update update) {
-        System.out.println("[RaccoonBot] onUpdateReceived has been called");
         if(update.hasCallbackQuery()){
             String chatID = String.valueOf(update.getCallbackQuery().getMessage().getChatId());
             handleCallback(update, activeGames.get(chatID));
@@ -55,8 +53,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
 
     private void handleUserAndGameLogic(String userID, String chatID, Message message, String text) {
         try {
-            System.out.println("[RaccoonBot] handleUserAndGameLogic has been called");
-            /*if (!DatabaseControl.userExist(userID)) {
+            if (!DatabaseControl.userExist(userID)) {
                 String username = message.getFrom().getUserName();
                 String name = message.getFrom().getFirstName();
                 String lastname = message.getFrom().getLastName();
@@ -71,11 +68,11 @@ public class RaccoonBot extends TelegramLongPollingBot{
                         DatabaseControl.updateInfo(userID, username, name, lastname);
                     });
                 }
-            }*/
+            }
 
-            System.out.println("[RacoonBot] CommandText: " + text);
+            String command = text.replace("@RaccoonGameMBot", "").trim();
 
-            switch (text) {
+            switch (command) {
                 case "/start": {
                     handleStartCommand(message, chatID);
                     break;
@@ -99,7 +96,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
                 default: {
                     Game game = activeGames.get(chatID);
 
-                    if(handleUserGuess(game, text, String.valueOf(message.getFrom().getId()))){
+                    if(handleUserGuess(game, command, String.valueOf(message.getFrom().getId()))){
                         String username = message.getFrom().getUserName();
                         sendMsg(chatID, username + " відгадав слово.");
 
@@ -122,11 +119,12 @@ public class RaccoonBot extends TelegramLongPollingBot{
         } catch (TelegramApiException e) {
             e.printStackTrace();
             sendMsg(chatID, "[DATABASE ERROR] Зверніться до розробника: " + "@" + this.developer);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
     private void handleStartCommand(Message message, String chatID) {
-        System.out.println("[RaccoonBot] handleStart command has been called");
         if (isGroupChat(message)) {
             sendMsg(chatID, "Ця команда доступна в особистому чаті з ботом " + "@RaccoonGameMBot");
         } else {
@@ -135,7 +133,6 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     private void handleStartGame(String chatID, Message message) throws TelegramApiException {
-        System.out.println("[RaccoonBot] handleStartGame has been called");
         if (isPrivateChat(message)) {
             sendMsg(chatID, "Для того щоб розпочати гру додай мене у групу з гравцями та введи команду /start_raccoon_game заново.");
         } else {
@@ -159,7 +156,6 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     private void handleStopGame(String chatID, Message message) {
-        System.out.println("[RaccoonBot] handleStopGame has been called");
         if(isPrivateChat(message)){
             sendMsg(chatID, "Ця команда доступна лише в груповому чаті.");
         }else {
@@ -176,7 +172,6 @@ public class RaccoonBot extends TelegramLongPollingBot{
     private void sendTopUsers(String chatID) {
         CompletableFuture.runAsync(() -> {
             try {
-                System.out.println("[RaccoonBot] sendTopUsers command has been called");
                 sendMsg(chatID, DatabaseControl.getTopUsers());
             } catch (SQLException e) {
                 sendMsg(chatID, "[DATABASE ERROR] Помилка при отриманні списку користувачів.");
@@ -185,7 +180,6 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     private void handleCallback(Update update, Game game){
-        System.out.println("[RaccoonBot] handleCallBack has been called");
         if(update.hasCallbackQuery() && game != null){
             String callbackQueryId = update.getCallbackQuery().getId();
             String callbackData = update.getCallbackQuery().getData();
@@ -228,7 +222,6 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     private boolean handleUserGuess(Game game, String userText, String sender){
-        System.out.println("[RaccoonBot] handleUserGuess command has been called");
         if(game != null){
             String wordToGuess = game.getWord();
 
@@ -238,7 +231,6 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     private boolean deletePrevMenuMsg(Game game) {
-        System.out.println("[RaccoonBot] deletePrevMenuMsg has been called");
         String prevMenuID = game.getPrevMenuMsgID();
 
         if (prevMenuID != null && game.getChatId() != null) {
@@ -269,7 +261,6 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     private void sendGameMenu(String username, Game game) {
-        System.out.println("[RaccoonBot] sendGameMenu command has been called");
 
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(game.getChatId());
@@ -304,7 +295,6 @@ public class RaccoonBot extends TelegramLongPollingBot{
     }
 
     private void sendMsg(String chatID, String text) {
-        System.out.println("[RaccoonBot] sendMsg command has been called");
         SendMessage message = new SendMessage();
         message.setChatId(chatID);
         message.setText(text);
