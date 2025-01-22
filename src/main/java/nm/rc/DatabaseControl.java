@@ -52,7 +52,8 @@ public class DatabaseControl {
     }
 
     public static boolean insertUser(int id, String username, String name, String lastname, int words, String userID) throws SQLException {
-        String query = "INSERT INTO users (id, username, name, lastname, words, userID, lastupdate) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        int money = 0;
+        String query = "INSERT INTO users (id, username, name, lastname, words, userID, lastupdate, money) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setInt(1, id);
@@ -62,13 +63,14 @@ public class DatabaseControl {
             statement.setInt(5, words);
             statement.setString(6, userID);
             statement.setString(7, getCurrentTime());
+            statement.setString(8, String.valueOf(money));
             int rowsAffected = statement.executeUpdate();
             return rowsAffected > 0;
         }
     }
 
     public static String getTopUsers() throws SQLException {
-        String query = "SELECT username, words FROM users ORDER BY words DESC LIMIT 10";
+        String query = "SELECT username, words, money FROM users ORDER BY words DESC LIMIT 10";
         StringBuilder result = new StringBuilder("Топ 10 гравців:\n");
 
         try (Connection connection = getConnection();
@@ -84,7 +86,8 @@ public class DatabaseControl {
                 }
 
                 int words = resultSet.getInt("words");
-                result.append(id).append(". @").append(username).append(" Відгаданих слів: ").append(words).append("\n");
+                int money = resultSet.getInt("money");
+                result.append(id).append(". @").append(username).append(" Відгаданих слів: ").append(words).append("Монети: ").append(money).append("\n");
                 id++;
                 count++;
             }
@@ -109,8 +112,62 @@ public class DatabaseControl {
         }
     }
 
+    public static void increaseMoney(String userID, int money){
+        String query = "UPDATE users SET money = money + ? WHERE userID = ?";
+        try (Connection connection = getConnection();
+            PreparedStatement statement = connection.prepareStatement(query)){
+            statement.setString(1, String.valueOf(money));
+            statement.setString(2, userID);
+            int rowsAffected = statement.executeUpdate();
+            if(rowsAffected > 0){
+                System.out.println("[RaccoonBot] Money successfully increased for user: " + userID);
+            }
+            else{
+                System.out.println("[RaccoonBot] User not found: " + userID + " for money insert");
+            }
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+    }
+
+    public static void decreaseMoney(String userID, int money){
+        String selectQuery = "SELECT money FROM users WHERE userID = ?";
+        String updateQuery = "UPDATE users SET money = ? WHERE userID = ?";
+
+        try (Connection connection = getConnection();
+             PreparedStatement selectStatement = connection.prepareStatement(selectQuery)) {
+
+            selectStatement.setString(1, userID);
+            try (ResultSet resultSet = selectStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    int currentMoney = resultSet.getInt("money");
+
+                    try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
+                        if (currentMoney >= money) {
+                            updateStatement.setInt(1, currentMoney - money);
+                        } else {
+                            updateStatement.setInt(1, 0);
+                        }
+                        updateStatement.setString(2, userID);
+
+                        int rowsAffected = updateStatement.executeUpdate();
+                        if (rowsAffected > 0) {
+                            System.out.println("[RaccoonBot] Money successfully updated for user: " + userID);
+                        } else {
+                            System.out.println("[Raccoon Bot] Failed to update money for user: " + userID);
+                        }
+                    }
+                } else {
+                    System.out.println("[RaccoonBot] User not found: " + userID + "for decrease money");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void updateInfo(String userID, String username, String name, String lastname) {
-        String updateQuery = "UPDATE users SET username = ?, name = ?, lastname = ?, lastupdate WHERE user_id = ?";
+        String updateQuery = "UPDATE users SET username = ?, name = ?, lastname = ?, lastupdate = ? WHERE userID = ?";
 
         try (Connection connection = DatabaseControl.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(updateQuery)) {
@@ -119,7 +176,7 @@ public class DatabaseControl {
             preparedStatement.setString(2, name);
             preparedStatement.setString(3, lastname);
             preparedStatement.setString(4, getCurrentTime());
-            preparedStatement.setString(4, userID);
+            preparedStatement.setString(5, userID);
 
             int rowsUpdated = preparedStatement.executeUpdate();
 
@@ -133,6 +190,7 @@ public class DatabaseControl {
             e.printStackTrace();
         }
     }
+
 
     public static boolean hasOneDayPassed(String userID) throws SQLException {
         LocalDateTime lastUpdate = getLastUpdate(userID);

@@ -12,6 +12,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import javax.xml.crypto.Data;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
@@ -116,7 +117,9 @@ public class RaccoonBot extends TelegramLongPollingBot{
                             } else {
                                 System.out.println("[RaccoonBot] Error while deleting message.");
                             }
-                            DatabaseControl.increaseWords(game.getCurrentPlayerID());
+                            String currentPlayerID = game.getCurrentPlayer();
+                            DatabaseControl.increaseWords(currentPlayerID);
+                            DatabaseControl.increaseMoney(currentPlayerID,10);
                             game.increaseCountAnswers();
                         }, executorService);
 
@@ -245,7 +248,10 @@ public class RaccoonBot extends TelegramLongPollingBot{
         if (isCorrectGuess && sender.equals(game.getCurrentPlayerID())) {
             deleteMsg(game, messageID);
             sendMsg(game.getChatId(), "@" + game.getCurrentPlayer() + " підказувати заборонено. Вам нараховано штраф -10 монет.");
-            // decrease money in future
+
+            CompletableFuture.runAsync(() -> {
+                DatabaseControl.decreaseMoney(game.getCurrentPlayerID(), 10);
+            } , executorService);
             return false;
         }
 
