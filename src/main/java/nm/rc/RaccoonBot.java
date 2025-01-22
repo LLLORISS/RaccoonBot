@@ -109,7 +109,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
 
                     if(handleUserGuess(game, command, String.valueOf(message.getFrom().getId()), message.getMessageId())){
                         String username = message.getFrom().getUserName();
-                        sendMsg(chatID, "@" + username + " відгадав слово.");
+                        sendMsg(chatID, "@" + username + " відгадав слово\\u2705.");
 
                         CompletableFuture.runAsync(() -> {
                             if(deletePrevMenuMsg(game)){
@@ -131,7 +131,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
             }
         } catch (TelegramApiException e) {
             e.printStackTrace();
-            sendMsg(chatID, "[DATABASE ERROR] Зверніться до розробника: " + "@" + this.developer);
+            sendMsg(chatID, "[DATABASE ERROR] \\u1F6ABЗверніться до розробника: " + "@" + this.developer);
         }
     }
 
@@ -139,20 +139,22 @@ public class RaccoonBot extends TelegramLongPollingBot{
         if (isGroupChat(message)) {
             sendMsg(chatID, "Ця команда доступна в особистому чаті з ботом " + "@RaccoonGameMBot");
         } else {
-            sendMsg(chatID, "Привіт, я RaccoonBot для гри в крокодила.");
+            sendMsg(chatID, "Привіт, я RaccoonBot для гри в крокодила 🦝." +
+                    "\nДля того щоб розпочати гру 🎮 тобі необхідно додати мене в групу 👥 з іншими гравцями та ввести команду /start_raccoon_game.");
         }
     }
 
     private void handleStartGame(String chatID, Message message) throws TelegramApiException {
         if (isPrivateChat(message)) {
-            sendMsg(chatID, "Для того щоб розпочати гру додай мене у групу з гравцями та введи команду /start_raccoon_game заново.");
+            sendMsg(chatID, "Гра в крокодила доступна тільки в групових чатах.\n" +
+                    "Для того щоб розпочати гру додай мене у групу з гравцями та введи команду /start_raccoon_game заново\\u2705.");
         } else {
             Game game = activeGames.get(chatID);
             if (game != null) {
-                sendMsg(chatID, "Гра вже розпочалася!");
+                sendMsg(chatID, "Гра вже розпочалася!\\u25B6");
             } else {
                 activeGames.put(chatID, new Game(message.getFrom().getUserName(), String.valueOf(message.getFrom().getId()), chatID, getRandomWord()));
-                sendMsg(chatID,"Розпочинаю гру. Загальна кількість зареєстрованих слів: " + WordLoader.getWordsCount());
+                sendMsg(chatID,"Розпочинаю гру\\u25B6. Загальна кількість зареєстрованих слів: " + WordLoader.getWordsCount());
                 sendGameMenu(message.getFrom().getUserName(), activeGames.get(chatID));
             }
         }
@@ -173,9 +175,9 @@ public class RaccoonBot extends TelegramLongPollingBot{
             Game game = activeGames.get(chatID);
             if (game != null) {
                 activeGames.remove(chatID);
-                sendMsg(chatID, "Гру завершено. Кількість відгаданих слів: " + game.getCountAnswers());
+                sendMsg(chatID, "Гру завершено\uD83D\uDD1A. Кількість відгаданих слів: " + game.getCountAnswers());
             } else {
-                sendMsg(chatID, "Гру не розпочато");
+                sendMsg(chatID, "Гру не розпочато\\u23F8");
             }
         }
     }
@@ -185,7 +187,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
             try {
                 sendMsg(chatID, DatabaseControl.getTopUsers());
             } catch (SQLException e) {
-                sendMsg(chatID, "[DATABASE ERROR] Помилка при отриманні списку користувачів.");
+                sendMsg(chatID, "[DATABASE ERROR] \\u1F6ABПомилка при отриманні списку користувачів.");
             }
         }, executorService);
     }
@@ -200,20 +202,20 @@ public class RaccoonBot extends TelegramLongPollingBot{
             switch(callbackData){
                 case "seeWordButtonCallBack": {
                     if(game.getCurrentPlayerID().equals(String.valueOf(update.getCallbackQuery().getFrom().getId()))) {
-                        text = "Слово: " + game.getWord();
+                        text = "\\u1F50DСлово: " + game.getWord();
                     }
                     else{
-                        text = "Слово пояснює інший гравець";
+                        text = "Слово пояснює інший гравець\\u274C";
                     }
                     break;
                 }
                 case "newWordButtonCallBack":{
                     if(game.getCurrentPlayerID().equals(String.valueOf(update.getCallbackQuery().getFrom().getId()))) {
                         game.setWord(this.getRandomWord());
-                        text = "Нове слово: " + game.getWord();
+                        text = "\\u1F195Нове слово: " + game.getWord();
                     }
                     else{
-                        text = "Слово пояснює інший гравець";
+                        text = "Слово пояснює інший гравець\\u274C";
                     }
                     break;
                 }
@@ -247,7 +249,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
 
         if (isCorrectGuess && sender.equals(game.getCurrentPlayerID())) {
             deleteMsg(game, messageID);
-            sendMsg(game.getChatId(), "@" + game.getCurrentPlayer() + " підказувати заборонено. Вам нараховано штраф -10 монет.");
+            sendMsg(game.getChatId(), "@" + game.getCurrentPlayer() + " підказувати заборонено. Вам нараховано штраф -10 монет\uD83D\uDCB0 .");
 
             CompletableFuture.runAsync(() -> {
                 DatabaseControl.decreaseMoney(game.getCurrentPlayerID(), 10);
@@ -329,11 +331,11 @@ public class RaccoonBot extends TelegramLongPollingBot{
 
     private static InlineKeyboardMarkup getInlineKeyboardMarkup() {
         InlineKeyboardButton seeWordBtn = new InlineKeyboardButton();
-        seeWordBtn.setText("Подивитися слово");
+        seeWordBtn.setText("Подивитися слово\\u1F50D");
         seeWordBtn.setCallbackData("seeWordButtonCallBack");
 
         InlineKeyboardButton newWordBtn = new InlineKeyboardButton();
-        newWordBtn.setText("Нове слово");
+        newWordBtn.setText("Нове слово\\u1F195");
         newWordBtn.setCallbackData("newWordButtonCallBack");
 
         InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();

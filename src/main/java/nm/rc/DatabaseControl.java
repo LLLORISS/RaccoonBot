@@ -71,7 +71,7 @@ public class DatabaseControl {
 
     public static String getTopUsers() throws SQLException {
         String query = "SELECT username, words, money FROM users ORDER BY words DESC LIMIT 10";
-        StringBuilder result = new StringBuilder("Топ 10 гравців:\n");
+        StringBuilder result = new StringBuilder("\uD83C\uDFC6Топ 10 гравців:\n");
 
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(query);
@@ -87,7 +87,7 @@ public class DatabaseControl {
 
                 int words = resultSet.getInt("words");
                 int money = resultSet.getInt("money");
-                result.append(id).append(". @").append(username).append(" Відгаданих слів: ").append(words).append("Монети: ").append(money).append("\n");
+                result.append(id).append(". @").append(username).append(" Відгаданих слів: ").append(words).append("Монети: ").append(money).append("\uD83D\uDCB0 \n");
                 id++;
                 count++;
             }
