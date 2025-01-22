@@ -109,7 +109,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
 
                     if(handleUserGuess(game, command, String.valueOf(message.getFrom().getId()), message.getMessageId())){
                         String username = message.getFrom().getUserName();
-                        sendMsg(chatID, "@" + username + " відгадав слово\\u2705.");
+                        sendMsg(chatID, "@" + username + " відгадав слово✅.");
 
                         CompletableFuture.runAsync(() -> {
                             if(deletePrevMenuMsg(game)){
@@ -131,7 +131,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
             }
         } catch (TelegramApiException e) {
             e.printStackTrace();
-            sendMsg(chatID, "[DATABASE ERROR] \\u1F6ABЗверніться до розробника: " + "@" + this.developer);
+            sendMsg(chatID, "[DATABASE ERROR] ὪBЗверніться до розробника: " + "@" + this.developer);
         }
     }
 
@@ -147,14 +147,14 @@ public class RaccoonBot extends TelegramLongPollingBot{
     private void handleStartGame(String chatID, Message message) throws TelegramApiException {
         if (isPrivateChat(message)) {
             sendMsg(chatID, "Гра в крокодила доступна тільки в групових чатах.\n" +
-                    "Для того щоб розпочати гру додай мене у групу з гравцями та введи команду /start_raccoon_game заново\\u2705.");
+                    "Для того щоб розпочати гру додай мене у групу з гравцями та введи команду /start_raccoon_game заново✅.");
         } else {
             Game game = activeGames.get(chatID);
             if (game != null) {
-                sendMsg(chatID, "Гра вже розпочалася!\\u25B6");
+                sendMsg(chatID, "Гра вже розпочалася! ▶");
             } else {
                 activeGames.put(chatID, new Game(message.getFrom().getUserName(), String.valueOf(message.getFrom().getId()), chatID, getRandomWord()));
-                sendMsg(chatID,"Розпочинаю гру\\u25B6. Загальна кількість зареєстрованих слів: " + WordLoader.getWordsCount());
+                sendMsg(chatID,"Розпочинаю гру ▶. Загальна кількість зареєстрованих слів: " + WordLoader.getWordsCount());
                 sendGameMenu(message.getFrom().getUserName(), activeGames.get(chatID));
             }
         }
@@ -175,9 +175,9 @@ public class RaccoonBot extends TelegramLongPollingBot{
             Game game = activeGames.get(chatID);
             if (game != null) {
                 activeGames.remove(chatID);
-                sendMsg(chatID, "Гру завершено\uD83D\uDD1A. Кількість відгаданих слів: " + game.getCountAnswers());
+                sendMsg(chatID, "Гру завершено\uD83C\uDFC1. Кількість відгаданих слів: " + game.getCountAnswers());
             } else {
-                sendMsg(chatID, "Гру не розпочато\\u23F8");
+                sendMsg(chatID, "Гру не розпочато ⏸");
             }
         }
     }
@@ -187,7 +187,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
             try {
                 sendMsg(chatID, DatabaseControl.getTopUsers());
             } catch (SQLException e) {
-                sendMsg(chatID, "[DATABASE ERROR] \\u1F6ABПомилка при отриманні списку користувачів.");
+                sendMsg(chatID, "[DATABASE ERROR] ὪBПомилка при отриманні списку користувачів.");
             }
         }, executorService);
     }
@@ -202,20 +202,20 @@ public class RaccoonBot extends TelegramLongPollingBot{
             switch(callbackData){
                 case "seeWordButtonCallBack": {
                     if(game.getCurrentPlayerID().equals(String.valueOf(update.getCallbackQuery().getFrom().getId()))) {
-                        text = "\\u1F50DСлово: " + game.getWord();
+                        text = "\uD83D\uDD0D\uFE0EDСлово: " + game.getWord();
                     }
                     else{
-                        text = "Слово пояснює інший гравець\\u274C";
+                        text = "Слово пояснює інший гравець❌";
                     }
                     break;
                 }
                 case "newWordButtonCallBack":{
                     if(game.getCurrentPlayerID().equals(String.valueOf(update.getCallbackQuery().getFrom().getId()))) {
                         game.setWord(this.getRandomWord());
-                        text = "\\u1F195Нове слово: " + game.getWord();
+                        text = "\uD83C\uDD955Нове слово: " + game.getWord();
                     }
                     else{
-                        text = "Слово пояснює інший гравець\\u274C";
+                        text = "Слово пояснює інший гравець❌";
                     }
                     break;
                 }
@@ -331,11 +331,11 @@ public class RaccoonBot extends TelegramLongPollingBot{
 
     private static InlineKeyboardMarkup getInlineKeyboardMarkup() {
         InlineKeyboardButton seeWordBtn = new InlineKeyboardButton();
-        seeWordBtn.setText("Подивитися слово\\u1F50D");
+        seeWordBtn.setText("Подивитися слово\uD83D\uDD0D\uFE0E");
         seeWordBtn.setCallbackData("seeWordButtonCallBack");
 
         InlineKeyboardButton newWordBtn = new InlineKeyboardButton();
-        newWordBtn.setText("Нове слово\\u1F195");
+        newWordBtn.setText("Нове слово\uD83C\uDD95");
         newWordBtn.setCallbackData("newWordButtonCallBack");
 
         InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
