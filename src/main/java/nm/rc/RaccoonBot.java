@@ -202,7 +202,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
             switch(callbackData){
                 case "seeWordButtonCallBack": {
                     if(game.getCurrentPlayerID().equals(String.valueOf(update.getCallbackQuery().getFrom().getId()))) {
-                        text = "\uD83D\uDD0D\uFE0EDСлово: " + game.getWord();
+                        text = "\uD83D\uDD0D\uFE0EСлово: " + game.getWord();
                     }
                     else{
                         text = "Слово пояснює інший гравець❌";
@@ -212,7 +212,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
                 case "newWordButtonCallBack":{
                     if(game.getCurrentPlayerID().equals(String.valueOf(update.getCallbackQuery().getFrom().getId()))) {
                         game.setWord(this.getRandomWord());
-                        text = "\uD83C\uDD955Нове слово: " + game.getWord();
+                        text = "\uD83C\uDD95Нове слово: " + game.getWord();
                     }
                     else{
                         text = "Слово пояснює інший гравець❌";

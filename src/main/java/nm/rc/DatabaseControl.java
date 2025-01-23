@@ -87,7 +87,7 @@ public class DatabaseControl {
 
                 int words = resultSet.getInt("words");
                 int money = resultSet.getInt("money");
-                result.append(id).append(". @").append(username).append(" Відгаданих слів: ").append(words).append("Монети: ").append(money).append("\uD83D\uDCB0 \n");
+                result.append(id).append(". @").append(username).append(" Відгаданих слів: ").append(words).append(" Монети: ").append(money).append("\uD83D\uDCB0 \n");
                 id++;
                 count++;
             }
