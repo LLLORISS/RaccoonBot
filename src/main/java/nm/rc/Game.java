@@ -70,45 +70,37 @@ public class Game {
 
     String getWordTip(String userID) {
         int currentWordLength = this.word.length();
-        StringBuilder result = new StringBuilder();
-
-        for (int i = 0; i < currentWordLength; i++) {
-            result.append("_");
-        }
-
-        String resultString;
+        StringBuilder result;
 
         Random rand = new Random();
 
         if (usersTips.get(userID) == null) {
+            result = new StringBuilder("_".repeat(currentWordLength));
             int randomNumber = rand.nextInt(currentWordLength);
-
             result.setCharAt(randomNumber, this.word.charAt(randomNumber));
-
-            resultString = result.toString();
-
-            usersTips.put(userID, resultString);
         } else {
             String curWord = usersTips.get(userID);
+            result = new StringBuilder(curWord);
 
             Set<Integer> indexes = new HashSet<>();
-
-            for(int i = 0; i < currentWordLength; i++){
-                if(curWord.charAt(i) != '_'){
+            for (int i = 0; i < currentWordLength; i++) {
+                if (curWord.charAt(i) != '_') {
                     indexes.add(i);
                 }
             }
-            int randomIndex;
 
-            do {
-                randomIndex = rand.nextInt(currentWordLength);
-            } while (indexes.contains(randomIndex));
+            if (indexes.size() < currentWordLength) {
+                int randomIndex;
+                do {
+                    randomIndex = rand.nextInt(currentWordLength);
+                } while (indexes.contains(randomIndex));
 
-            result.setCharAt(randomIndex, this.word.charAt(randomIndex));
-            resultString = result.toString();
-            usersTips.put(userID, resultString);
+                result.setCharAt(randomIndex, this.word.charAt(randomIndex));
+            }
         }
 
+        String resultString = result.toString();
+        usersTips.put(userID, resultString);
         return resultString;
     }
 }
