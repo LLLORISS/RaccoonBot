@@ -102,11 +102,10 @@ public class DatabaseControl {
 
                 if (username == null || username.isEmpty()) {
                     result.append(id).append(". ").append(name).append(" Відгаданих слів: ").append(words).append(" Монети: ").append(money).append("\uD83D\uDCB0\n");
-                }
-                else if (name == null || name.isEmpty()) {
-                }
-                else {
+                } else if (name == null || name.isEmpty()) {
                     result.append(id).append(". ").append(lastname).append(" Відгаданих слів: ").append(words).append(" Монети: ").append(money).append("\uD83D\uDCB0\n");
+                } else {
+                    result.append(id).append(". @").append(username).append(" Відгаданих слів: ").append(words).append(" Монети: ").append(money).append("\uD83D\uDCB0\n");
                 }
                 id++;
                 count++;
@@ -115,7 +114,6 @@ public class DatabaseControl {
 
         return result.toString();
     }
-
 
     public static void increaseWords(String userID){
         String query = "UPDATE users SET words = words + 1 WHERE userID = ?";
