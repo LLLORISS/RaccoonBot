@@ -269,10 +269,13 @@ public class RaccoonBot extends TelegramLongPollingBot{
                 return "Ти пояснюєш слово";
             } else {
 
-                CompletableFuture.runAsync(() -> {
-                    DatabaseControl.decreaseMoney(userID, 50);
-                }, executorService);
+                String word = game.getCurrentTip(userID);
 
+                if(word.contains("_")) {
+                    CompletableFuture.runAsync(() -> {
+                        DatabaseControl.decreaseMoney(userID, 50);
+                    }, executorService);
+                }
                 return "Букви: " + game.getWordTip(userID);
             }
         } else {

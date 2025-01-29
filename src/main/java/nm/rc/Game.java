@@ -68,6 +68,8 @@ public class Game {
         return this.countAnswers;
     }
 
+    public String getCurrentTip(String userID) { return this.usersTips.get(userID); }
+
     String getWordTip(String userID) {
         int currentWordLength = this.word.length();
         StringBuilder result;
