@@ -97,7 +97,7 @@ public class DatabaseControl {
 
                 int words = resultSet.getInt("words");
                 int money = resultSet.getInt("money");
-                result.append(id).append(". @").append(username).append(" Відгаданих слів: ").append(words).append(" Монети: ").append(money).append("\uD83D\uDCB0 \n");
+                result.append(id).append(". @").append(username).append(" Відгаданих слів: ").append(words).append(" Монети: ").append(money).append("\uD83D\uDCB0\n");
                 id++;
                 count++;
             }
@@ -201,6 +201,20 @@ public class DatabaseControl {
         }
     }
 
+    public static int getMoneyByUserId(String userID) throws SQLException {
+        String query = "SELECT money FROM users WHERE userID = ?";
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, userID);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt("money");
+                } else {
+                    return 0;
+                }
+            }
+        }
+    }
 
     public static boolean hasOneDayPassed(String userID) throws SQLException {
         LocalDateTime lastUpdate = getLastUpdate(userID);

@@ -40,7 +40,12 @@ public class RaccoonBot extends TelegramLongPollingBot{
     public void onUpdateReceived(Update update) {
         if(update.hasCallbackQuery()){
             String chatID = String.valueOf(update.getCallbackQuery().getMessage().getChatId());
-            handleCallback(update, activeGames.get(chatID));
+            try {
+                handleCallback(update, activeGames.get(chatID));
+            }
+            catch(SQLException e){
+                e.printStackTrace();
+            }
         } else if (update.hasMessage()) {
             Message message = update.getMessage();
             String text = message.getText();
@@ -196,75 +201,85 @@ public class RaccoonBot extends TelegramLongPollingBot{
         }, executorService);
     }
 
-    private void handleCallback(Update update, Game game){
+    private void handleCallback(Update update, Game game) throws SQLException {
         if(update.hasCallbackQuery() && game != null){
             String callbackQueryId = update.getCallbackQuery().getId();
             String callbackData = update.getCallbackQuery().getData();
-
             String text = "";
 
-            switch(callbackData){
-                case "seeWordButtonCallBack": {
-                    if(game.getCurrentPlayerID().equals(String.valueOf(update.getCallbackQuery().getFrom().getId()))) {
-                        text = "\uD83D\uDD0D\uFE0EСлово: " + game.getWord();
-                    }
-                    else{
-                        text = "Слово пояснює інший гравець❌";
-                    }
-                    break;
-                }
-                case "newWordButtonCallBack":{
-                    if(game.getCurrentPlayerID().equals(String.valueOf(update.getCallbackQuery().getFrom().getId()))) {
-                        game.setWord(this.getRandomWord());
-                        text = "\uD83C\uDD95Нове слово: " + game.getWord();
-                    } else{
-                        text = "Слово пояснює інший гравець❌";
-                    }
-                    break;
-                }
-                case "tipSeeWordButtonCallBackData":{
-                    String userID = String.valueOf(update.getCallbackQuery().getFrom().getId());
-                    if(game.getCurrentPlayerID().equals(userID)){
-                        text = "Ти пояснюєш слово";
-                    }else{
-                        text = "Слово: " + game.getWord();
+            String userID = String.valueOf(update.getCallbackQuery().getFrom().getId());
 
-                        CompletableFuture.runAsync(() -> {
-                            DatabaseControl.decreaseMoney(userID, 100);
-                        }, executorService);
-                    }
-
-                    break;
-                }
-                case "tipOpenLetterButtonCallBack":{
-                    String userID = String.valueOf(update.getCallbackQuery().getFrom().getId());
-
-                    if(game.getCurrentPlayerID().equals(userID)){
-                        text = "Ти пояснюєш слово";
-                    }else{
-                        text = "Букви: " + game.getWordTip(userID);
-
-                        CompletableFuture.runAsync(() -> {
-                            DatabaseControl.decreaseMoney(userID, 50);
-                        }, executorService);
-                    }
-
-                    break;
-                }
-            }
+            text = switch (callbackData) {
+                case "seeWordButtonCallBack" -> handleSeeWordCallback(game, userID);
+                case "newWordButtonCallBack" -> handleNewWordCallback(game, userID);
+                case "tipSeeWordButtonCallBackData" -> handleTipSeeWordCallback(userID, game);
+                case "tipOpenLetterButtonCallBack" -> handleTipOpenLetterCallback(userID, game);
+                default -> "Необроблене запитання";
+            };
 
             AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
             answerCallbackQuery.setCallbackQueryId(callbackQueryId);
             answerCallbackQuery.setText(text);
             answerCallbackQuery.setShowAlert(Boolean.TRUE);
 
-            try{
+            try {
                 execute(answerCallbackQuery);
-            }catch(Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
+
+    private String handleSeeWordCallback(Game game, String userID) {
+        if (game.getCurrentPlayerID().equals(userID)) {
+            return "\uD83D\uDD0D\uFE0EСлово: " + game.getWord();
+        } else {
+            return "Слово пояснює інший гравець❌";
+        }
+    }
+
+    private String handleNewWordCallback(Game game, String userID) {
+        if (game.getCurrentPlayerID().equals(userID)) {
+            game.setWord(this.getRandomWord());
+            return "\uD83C\uDD95Нове слово: " + game.getWord();
+        } else {
+            return "Слово пояснює інший гравець❌";
+        }
+    }
+
+    private String handleTipSeeWordCallback(String userID, Game game) throws SQLException {
+        if (DatabaseControl.getMoneyByUserId(userID) >= 100) {
+            if (game.getCurrentPlayerID().equals(userID)) {
+                return "Ти пояснюєш слово";
+            } else {
+                CompletableFuture.runAsync(() -> {
+                    DatabaseControl.decreaseMoney(userID, 100);
+                }, executorService);
+
+                return "Слово: " + game.getWord();
+            }
+        } else {
+            return "В тебе недостатньо монет\uD83D\uDCB0";
+        }
+    }
+
+    private String handleTipOpenLetterCallback(String userID, Game game) throws SQLException {
+        if (DatabaseControl.getMoneyByUserId(userID) >= 50) {
+            if (game.getCurrentPlayerID().equals(userID)) {
+                return "Ти пояснюєш слово";
+            } else {
+
+                CompletableFuture.runAsync(() -> {
+                    DatabaseControl.decreaseMoney(userID, 50);
+                }, executorService);
+
+                return "Букви: " + game.getWordTip(userID);
+            }
+        } else {
+            return "В тебе недостатньо монет\uD83D\uDCB0";
+        }
+    }
+
 
     private boolean handleUserGuess(Game game, String userText, String sender, int messageID){
         if (game == null) {
