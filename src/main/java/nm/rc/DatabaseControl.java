@@ -101,7 +101,6 @@ public class DatabaseControl {
     }
 
     public static void increaseWords(String userID){
-        System.out.println("[RaccoonBot] Increase words");
         String query = "UPDATE users SET words = words + 1 WHERE userID = ?";
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
@@ -118,7 +117,6 @@ public class DatabaseControl {
     }
 
     public static void increaseMoney(String userID, int money){
-        System.out.println("[RaccoonBot] Increase money");
         String query = "UPDATE users SET money = money + ? WHERE userID = ?";
         try (Connection connection = getConnection();
             PreparedStatement statement = connection.prepareStatement(query)){

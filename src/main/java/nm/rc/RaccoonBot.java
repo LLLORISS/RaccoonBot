@@ -117,7 +117,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
                             } else {
                                 System.out.println("[RaccoonBot] Error while deleting message.");
                             }
-                            String currentPlayerID = game.getCurrentPlayer();
+                            String currentPlayerID = game.getCurrentPlayerID();
                             DatabaseControl.increaseWords(currentPlayerID);
                             DatabaseControl.increaseMoney(currentPlayerID,10);
                             game.increaseCountAnswers();
