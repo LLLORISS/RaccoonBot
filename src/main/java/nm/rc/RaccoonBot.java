@@ -217,10 +217,38 @@ public class RaccoonBot extends TelegramLongPollingBot{
                     if(game.getCurrentPlayerID().equals(String.valueOf(update.getCallbackQuery().getFrom().getId()))) {
                         game.setWord(this.getRandomWord());
                         text = "\uD83C\uDD95Нове слово: " + game.getWord();
-                    }
-                    else{
+                    } else{
                         text = "Слово пояснює інший гравець❌";
                     }
+                    break;
+                }
+                case "tipSeeWordButtonCallBackData":{
+                    String userID = String.valueOf(update.getCallbackQuery().getFrom().getId());
+                    if(game.getCurrentPlayerID().equals(userID)){
+                        text = "Ти пояснюєш слово";
+                    }else{
+                        text = "Слово: " + game.getWord();
+
+                        CompletableFuture.runAsync(() -> {
+                            DatabaseControl.decreaseMoney(userID, 100);
+                        }, executorService);
+                    }
+
+                    break;
+                }
+                case "tipOpenLetterButtonCallBack":{
+                    String userID = String.valueOf(update.getCallbackQuery().getFrom().getId());
+
+                    if(game.getCurrentPlayerID().equals(userID)){
+                        text = "Ти пояснюєш слово";
+                    }else{
+                        text = "Букви: " + game.getWordTip(userID);
+
+                        CompletableFuture.runAsync(() -> {
+                            DatabaseControl.decreaseMoney(userID, 50);
+                        }, executorService);
+                    }
+
                     break;
                 }
             }
@@ -347,8 +375,20 @@ public class RaccoonBot extends TelegramLongPollingBot{
         newWordBtn.setText("Нове слово\uD83C\uDD95");
         newWordBtn.setCallbackData("newWordButtonCallBack");
 
+        InlineKeyboardButton tipSeeWordBtn = new InlineKeyboardButton();
+        tipSeeWordBtn.setText("Підглянути слово\uD83D\uDCDD");
+        tipSeeWordBtn.setCallbackData("tipSeeWordButtonCallBackData");
+
+        InlineKeyboardButton tipOpenLetterBtn = new InlineKeyboardButton();
+        tipOpenLetterBtn.setText("Відкрити букву\uD83D\uDD20");
+        tipOpenLetterBtn.setCallbackData("tipOpenLetterButtonCallBack");
+
+
         InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
-        keyboardMarkup.setKeyboard(List.of(Arrays.asList(seeWordBtn, newWordBtn)));
+        keyboardMarkup.setKeyboard(List.of(
+                Arrays.asList(seeWordBtn, newWordBtn),
+                Arrays.asList(tipSeeWordBtn, tipOpenLetterBtn)
+        ));
         return keyboardMarkup;
     }
 
