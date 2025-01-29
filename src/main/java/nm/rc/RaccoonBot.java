@@ -12,8 +12,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import javax.xml.crypto.Data;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -81,7 +79,6 @@ public class RaccoonBot extends TelegramLongPollingBot{
             }
 
             String command = text.replace("@RaccoonGameMBot", "").trim();
-            System.out.println("[RaccoonBot] Command: " + command);
 
             switch (command) {
                 case "/start": {
@@ -109,7 +106,14 @@ public class RaccoonBot extends TelegramLongPollingBot{
 
                     if(handleUserGuess(game, command, String.valueOf(message.getFrom().getId()), message.getMessageId())){
                         String username = message.getFrom().getUserName();
-                        sendMsg(chatID, "@" + username + " відгадав слово✅.");
+                        String name = message.getFrom().getFirstName();
+                        String lastname = message.getFrom().getLastName();
+                        if(username == null){
+                            sendMsg(chatID, name + " " + lastname + " відгадав слово✅.");
+                        }
+                        else{
+                            sendMsg(chatID, "@" + username + " відгадав слово✅.");
+                        }
 
                         CompletableFuture.runAsync(() -> {
                             if(deletePrevMenuMsg(game)){
@@ -124,7 +128,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
                         }, executorService);
 
                         game.swapGameInfo(userID,username, getRandomWord());
-                        sendGameMenu(username, game);
+                        sendGameMenu(username, name, lastname, game);
                     }
                     break;
                 }
@@ -155,7 +159,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
             } else {
                 activeGames.put(chatID, new Game(message.getFrom().getUserName(), String.valueOf(message.getFrom().getId()), chatID, getRandomWord()));
                 sendMsg(chatID,"Розпочинаю гру ▶. Загальна кількість зареєстрованих слів: " + WordLoader.getWordsCount());
-                sendGameMenu(message.getFrom().getUserName(), activeGames.get(chatID));
+                sendGameMenu(message.getFrom().getUserName(), message.getFrom().getFirstName(), message.getFrom().getLastName(), activeGames.get(chatID));
             }
         }
     }
@@ -309,11 +313,16 @@ public class RaccoonBot extends TelegramLongPollingBot{
         return message.getChat().getType().equals("group");
     }
 
-    private void sendGameMenu(String username, Game game) {
+    private void sendGameMenu(String username, String name, String lastname, Game game) {
 
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(game.getChatId());
-        sendMessage.setText("Слово пояснює: @" + username);
+        if(username == null){
+            sendMessage.setText("Слово пояснює: " + name + " " + lastname);
+        }
+        else{
+            sendMessage.setText("Слово пояснює: @" + username);
+        }
 
         InlineKeyboardMarkup keyboardMarkup = getInlineKeyboardMarkup();
         sendMessage.setReplyMarkup(keyboardMarkup);
@@ -363,10 +372,6 @@ public class RaccoonBot extends TelegramLongPollingBot{
     @Override
     public String getBotToken() {
         return this.botToken;
-    }
-
-    public void shutdownExecutorService() {
-        executorService.shutdown();
     }
 
     public void setBotCommands(){

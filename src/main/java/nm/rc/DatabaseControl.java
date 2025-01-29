@@ -53,8 +53,14 @@ public class DatabaseControl {
 
     public static boolean insertUser(int id, String username, String name, String lastname, int words, String userID) throws SQLException {
         int money = 0;
+        if (username == null){
+            username = "";
+        }
         if (lastname == null) {
             lastname = "";
+        }
+        if(name == null){
+            name = "";
         }
 
         String query = "INSERT INTO users (id, username, name, lastname, words, userID, lastupdate, money) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
@@ -107,9 +113,9 @@ public class DatabaseControl {
             statement.setString(1, userID);
             int rowsAffected = statement.executeUpdate();
             if (rowsAffected > 0) {
-                System.out.println("Words successfully incremented for user: " + userID);
+                System.out.println("[RaccoonBot] Words successfully incremented for user: " + userID);
             } else {
-                System.out.println("User not found: " + userID);
+                System.out.println("[RaccoonBot] User not found: " + userID);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -158,7 +164,7 @@ public class DatabaseControl {
                         if (rowsAffected > 0) {
                             System.out.println("[RaccoonBot] Money successfully updated for user: " + userID);
                         } else {
-                            System.out.println("[Raccoon Bot] Failed to update money for user: " + userID);
+                            System.out.println("[RaccoonBot] Failed to update money for user: " + userID);
                         }
                     }
                 } else {

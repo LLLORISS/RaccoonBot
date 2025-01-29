@@ -25,10 +25,6 @@ public class Game {
         this.currentPlayerID = userID;
     }
 
-    public void setIsActive(boolean isActive){
-        this.isActive = isActive;
-    }
-
     public void setWord(String word){
         this.word = word;
     }
@@ -45,10 +41,6 @@ public class Game {
         return this.prevMenuMsgID;
     }
 
-    public boolean getIsActive(){
-        return this.isActive;
-    }
-
     public String getCurrentPlayer(){
         return this.currentPlayer;
     }
@@ -59,10 +51,6 @@ public class Game {
 
     public String getWord() {
         return word;
-    }
-
-    public String getPlayer() {
-        return currentPlayer;
     }
 
     public String getChatId() {
