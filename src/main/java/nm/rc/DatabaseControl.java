@@ -53,6 +53,10 @@ public class DatabaseControl {
 
     public static boolean insertUser(int id, String username, String name, String lastname, int words, String userID) throws SQLException {
         int money = 0;
+        if (lastname == null) {
+            lastname = "";
+        }
+
         String query = "INSERT INTO users (id, username, name, lastname, words, userID, lastupdate, money) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
