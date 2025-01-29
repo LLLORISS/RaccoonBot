@@ -123,7 +123,7 @@ public class RaccoonBot extends TelegramLongPollingBot{
                             game.increaseCountAnswers();
                         }, executorService);
 
-                        game.swapGameInfo(username, getRandomWord());
+                        game.swapGameInfo(userID,username, getRandomWord());
                         sendGameMenu(username, game);
                     }
                     break;

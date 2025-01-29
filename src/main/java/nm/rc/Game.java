@@ -19,9 +19,10 @@ public class Game {
         this.countAnswers = 0;
     }
 
-    public void swapGameInfo(String newPlayer, String newWord){
+    public void swapGameInfo(String userID,String newPlayer, String newWord){
         this.currentPlayer = newPlayer;
         this.word = newWord;
+        this.currentPlayerID = userID;
     }
 
     public void setIsActive(boolean isActive){

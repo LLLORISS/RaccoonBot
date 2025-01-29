@@ -67,7 +67,7 @@ public class DatabaseControl {
             statement.setInt(5, words);
             statement.setString(6, userID);
             statement.setString(7, getCurrentTime());
-            statement.setString(8, String.valueOf(money));
+            statement.setInt(8, money);
             int rowsAffected = statement.executeUpdate();
             return rowsAffected > 0;
         }
@@ -101,6 +101,7 @@ public class DatabaseControl {
     }
 
     public static void increaseWords(String userID){
+        System.out.println("[RaccoonBot] Increase words");
         String query = "UPDATE users SET words = words + 1 WHERE userID = ?";
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
@@ -117,10 +118,11 @@ public class DatabaseControl {
     }
 
     public static void increaseMoney(String userID, int money){
+        System.out.println("[RaccoonBot] Increase money");
         String query = "UPDATE users SET money = money + ? WHERE userID = ?";
         try (Connection connection = getConnection();
             PreparedStatement statement = connection.prepareStatement(query)){
-            statement.setString(1, String.valueOf(money));
+            statement.setInt(1, money);
             statement.setString(2, userID);
             int rowsAffected = statement.executeUpdate();
             if(rowsAffected > 0){
