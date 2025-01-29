@@ -80,7 +80,7 @@ public class DatabaseControl {
     }
 
     public static String getTopUsers() throws SQLException {
-        String query = "SELECT username, words, money FROM users ORDER BY words DESC LIMIT 10";
+        String query = "SELECT username, name, lastname, words, money FROM users ORDER BY words DESC LIMIT 10";
         StringBuilder result = new StringBuilder("\uD83C\uDFC6Топ 10 гравців:\n");
 
         try (Connection connection = getConnection();
@@ -95,9 +95,19 @@ public class DatabaseControl {
                     continue;
                 }
 
+                String name = resultSet.getString("name");
+                String lastname = resultSet.getString("lastname");
                 int words = resultSet.getInt("words");
                 int money = resultSet.getInt("money");
-                result.append(id).append(". @").append(username).append(" Відгаданих слів: ").append(words).append(" Монети: ").append(money).append("\uD83D\uDCB0\n");
+
+                if (username == null || username.isEmpty()) {
+                    result.append(id).append(". ").append(name).append(" Відгаданих слів: ").append(words).append(" Монети: ").append(money).append("\uD83D\uDCB0\n");
+                }
+                else if (name == null || name.isEmpty()) {
+                }
+                else {
+                    result.append(id).append(". ").append(lastname).append(" Відгаданих слів: ").append(words).append(" Монети: ").append(money).append("\uD83D\uDCB0\n");
+                }
                 id++;
                 count++;
             }
@@ -105,6 +115,7 @@ public class DatabaseControl {
 
         return result.toString();
     }
+
 
     public static void increaseWords(String userID){
         String query = "UPDATE users SET words = words + 1 WHERE userID = ?";
