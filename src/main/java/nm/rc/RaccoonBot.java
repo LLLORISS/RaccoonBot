@@ -119,6 +119,9 @@ public class RaccoonBot extends TelegramLongPollingBot{
                         else{
                             sendMsg(chatID, "@" + username + " відгадав слово✅.");
                         }
+                        String currentPlayerID = game.getCurrentPlayerID();
+
+                        game.swapGameInfo(userID,username, getRandomWord());
 
                         CompletableFuture.runAsync(() -> {
                             if(deletePrevMenuMsg(game)){
@@ -126,13 +129,12 @@ public class RaccoonBot extends TelegramLongPollingBot{
                             } else {
                                 System.out.println("[RaccoonBot] Error while deleting message.");
                             }
-                            String currentPlayerID = game.getCurrentPlayerID();
+
                             DatabaseControl.increaseWords(currentPlayerID);
                             DatabaseControl.increaseMoney(currentPlayerID,10);
                             game.increaseCountAnswers();
                         }, executorService);
 
-                        game.swapGameInfo(userID,username, getRandomWord());
                         sendGameMenu(username, name, lastname, game);
                     }
                     break;
